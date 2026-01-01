@@ -52,6 +52,39 @@ class BabyStationActivity : AppCompatActivity() {
         startCamera()
         startServer()
         registerService()
+
+        
+        resetInactivityTimer()
+    }
+
+
+
+    private val ecoModeRunnable = Runnable { enableEcoMode(true) }
+    private fun resetInactivityTimer() {
+        handler.removeCallbacks(ecoModeRunnable)
+        enableEcoMode(false)
+        handler.postDelayed(ecoModeRunnable, 15000) // 15 seconds
+    }
+
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent?): Boolean {
+        resetInactivityTimer()
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private fun enableEcoMode(enable: Boolean) {
+        val overlay = findViewById<android.view.View>(R.id.overlayEcoMode)
+        val layoutParams = window.attributes
+
+        if (enable) {
+            overlay.visibility = android.view.View.VISIBLE
+            // Set brightness to minimum
+            layoutParams.screenBrightness = 0.01f // 1% brightness
+        } else {
+            overlay.visibility = android.view.View.GONE
+            // Restore brightness to system default
+            layoutParams.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+        }
+        window.attributes = layoutParams
     }
 
     private fun startCamera() {
@@ -91,7 +124,7 @@ class BabyStationActivity : AppCompatActivity() {
                 } else {
                      currentFrame.set(bytes)
                 }
-                
+
                 imageProxy.close()
             }
 
@@ -172,25 +205,25 @@ class BabyStationActivity : AppCompatActivity() {
             return if (session.uri == "/") {
                 val boundary = "Obj_123"
                 val contentType = "multipart/x-mixed-replace;boundary=$boundary"
-                
+
                 // Create a PipedInputStream could be complex, let's try a simple loop in a separate thread approach
                 // Actually NanoHTTPD `serve` expects a return. For streaming, we need to return a ChunkedResponse
                 // But NanoHTTPD support for MJPEG usually involves custom response handling.
                 // Simplified: We accept the connection and keep writing to the output stream.
-                
+
                 // Wait, NanoHTTPD Response needs an InputStream.
                 // We can use a custom InputStream that blocks and waits for new frames.
-                
+
                 val inputStream = object : java.io.InputStream() {
-                     // This is tricky to verify without testing. 
+                     // This is tricky to verify without testing.
                      // Let's assume standard approach: Send one frame? No, we need a stream.
                      // We will implement a simple infinite stream here.
                      // But strictly speaking, NanoHTTPD requires us to pass a stream that it will read from.
-                     
+
                      // Alternative: create a PipedInputStream and write to PipedOutputStream in a loop.
                      val pipedIn = java.io.PipedInputStream()
                      val pipedOut = java.io.PipedOutputStream(pipedIn)
-                     
+
                      init {
                         Thread {
                             try {
@@ -211,16 +244,16 @@ class BabyStationActivity : AppCompatActivity() {
                             }
                         }.start()
                      }
-                     
+
                      override fun read(): Int {
                          return pipedIn.read()
                      }
-                     
+
                      override fun read(b: ByteArray, off: Int, len: Int): Int {
                          return pipedIn.read(b, off, len)
                      }
                 }
-                
+
                newChunkedResponse(Response.Status.OK, contentType, inputStream)
             } else {
                 newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found")
@@ -229,6 +262,7 @@ class BabyStationActivity : AppCompatActivity() {
     }
 
     companion object {
+        private val handler = android.os.Handler(android.os.Looper.getMainLooper())
         private const val TAG = "BabyStationActivity"
     }
 }

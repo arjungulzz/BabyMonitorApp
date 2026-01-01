@@ -46,4 +46,45 @@
             android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- Black Overlay for Eco Mode -->
+    <FrameLayout
+        android:id="@+id/overlayEcoMode"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_eco"
+                app:tint="#66FFFFFF"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Eco Mode On"
+                android:textColor="#66FFFFFF"
+                android:textSize="16sp"/>
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tap anywhere to wake"
+                android:textColor="#33FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+    </FrameLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
