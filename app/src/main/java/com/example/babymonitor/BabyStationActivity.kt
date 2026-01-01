@@ -27,37 +27,82 @@ class BabyStationActivity : AppCompatActivity() {
 
     private lateinit var cameraProvider: ProcessCameraProvider
     private lateinit var server: MjpegServer
-    private var nsdManager: NsdManager? = null
-    private var registrationListener: NsdManager.RegistrationListener? = null
-    private val currentFrame = AtomicReference<ByteArray>()
-
-    private lateinit var tvStatus: android.widget.TextView
-    private lateinit var statusIndicator: android.widget.ImageView
+    private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private var cameraControl: androidx.camera.core.CameraControl? = null
+    private var isMicMuted = false
+    private var isFlashOn = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_baby_station)
+        supportActionBar?.hide()
         
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        
+        // Hide System Bars (Immersive)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+            controller.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
 
         tvStatus = findViewById(R.id.tvStatus)
-        // locate the image view inside the capsule
-        // The layout has LinearLayout > ImageView, separate IDs needed?
-        // Checking layout... "ImageView ... android:layout_marginEnd..." no ID.
-        // Wait, I need to add ID to the ImageView in activity_baby_station.xml first or find by traversal.
-        // Better to add logic to just update text for now, or assume ID if I added it?
-        // In the previous layout update, I gave ID to TextView (tvStatus) but NOT to ImageView.
-        // I will just update the Text for now.
+        setupControls()
         
         startCamera()
         startServer()
+        startAudioServer()
         registerService()
 
-        
         resetInactivityTimer()
     }
 
+    private fun setupControls() {
+        val btnFlip = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnFlipCamera)
+        val btnMic = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnMicToggle)
+        val btnFlash = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnFlashToggle)
+        val seekZoom = findViewById<android.widget.SeekBar>(R.id.seekBarZoom)
 
+        btnFlip.setOnClickListener {
+            cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+                CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                CameraSelector.DEFAULT_BACK_CAMERA
+            }
+            startCamera()
+            resetInactivityTimer()
+        }
+
+        btnMic.setOnClickListener {
+            isMicMuted = !isMicMuted
+            btnMic.setImageResource(if (isMicMuted) R.drawable.ic_mic_off else R.drawable.ic_mic_on)
+            resetInactivityTimer()
+        }
+
+        btnFlash.setOnClickListener {
+            isFlashOn = !isFlashOn
+            cameraControl?.enableTorch(isFlashOn)
+            btnFlash.setImageResource(if (isFlashOn) R.drawable.ic_flash_on else R.drawable.ic_flash_off)
+            btnFlash.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                if (isFlashOn) ContextCompat.getColor(this, R.color.primary_dark_blue) else ContextCompat.getColor(this, R.color.surface_white)
+            )
+            btnFlash.imageTintList = android.content.res.ColorStateList.valueOf(
+                if (isFlashOn) ContextCompat.getColor(this, R.color.surface_white) else ContextCompat.getColor(this, R.color.text_primary)
+            )
+            resetInactivityTimer()
+        }
+
+        seekZoom.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    cameraControl?.setLinearZoom(progress / 100f)
+                    resetInactivityTimer()
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        })
+    }
 
     private val ecoModeRunnable = Runnable { enableEcoMode(true) }
     private fun resetInactivityTimer() {
@@ -73,14 +118,17 @@ class BabyStationActivity : AppCompatActivity() {
 
     private fun enableEcoMode(enable: Boolean) {
         val overlay = findViewById<android.view.View>(R.id.overlayEcoMode)
+        val controls = findViewById<android.view.View>(R.id.layoutControls)
         val layoutParams = window.attributes
 
         if (enable) {
             overlay.visibility = android.view.View.VISIBLE
+            controls.visibility = android.view.View.GONE
             // Set brightness to minimum
             layoutParams.screenBrightness = 0.01f // 1% brightness
         } else {
             overlay.visibility = android.view.View.GONE
+            controls.visibility = android.view.View.VISIBLE
             // Restore brightness to system default
             layoutParams.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
         }
@@ -93,6 +141,7 @@ class BabyStationActivity : AppCompatActivity() {
             cameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build()
             val viewFinder = findViewById<PreviewView>(R.id.viewFinder)
+            viewFinder.scaleType = PreviewView.ScaleType.FILL_CENTER // Immersive fill
             preview.setSurfaceProvider(viewFinder.surfaceProvider)
 
             val imageAnalysis = ImageAnalysis.Builder()
@@ -110,7 +159,7 @@ class BabyStationActivity : AppCompatActivity() {
                     null
                 )
                 val out = ByteArrayOutputStream()
-                yuvImage.compressToJpeg(Rect(0, 0, imageProxy.width, imageProxy.height), 60, out)
+                yuvImage.compressToJpeg(Rect(0, 0, imageProxy.width, imageProxy.height), 40, out)
                 val bytes = out.toByteArray()
 
                 if (rotationDegrees != 0) {
@@ -119,7 +168,7 @@ class BabyStationActivity : AppCompatActivity() {
                      matrix.postRotate(rotationDegrees.toFloat())
                      val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
                      val out2 = ByteArrayOutputStream()
-                     rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 60, out2)
+                     rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 40, out2)
                      currentFrame.set(out2.toByteArray())
                 } else {
                      currentFrame.set(bytes)
@@ -130,9 +179,10 @@ class BabyStationActivity : AppCompatActivity() {
 
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalysis
+                val camera = cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview, imageAnalysis
                 )
+                cameraControl = camera.cameraControl
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
@@ -197,7 +247,108 @@ class BabyStationActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         server.stop()
+        stopAudioServer()
         nsdManager?.unregisterService(registrationListener)
+    }
+
+    // Audio Server Logic
+    private var isAudioRunning = false
+    private var audioThread: Thread? = null
+
+    private fun startAudioServer() {
+        if (isAudioRunning) return
+        isAudioRunning = true
+        
+        audioThread = Thread {
+            var serverSocket: java.net.ServerSocket? = null
+            var audioRecord: android.media.AudioRecord? = null
+            
+            try {
+                serverSocket = java.net.ServerSocket(8081)
+                
+                val sampleRate = 44100
+                val channelConfig = android.media.AudioFormat.CHANNEL_IN_MONO
+                val audioFormat = android.media.AudioFormat.ENCODING_PCM_16BIT
+                val minBufSize = android.media.AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+
+                if (androidx.core.app.ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    
+                    audioRecord = android.media.AudioRecord(
+                        android.media.MediaRecorder.AudioSource.MIC,
+                        sampleRate,
+                        channelConfig,
+                        audioFormat,
+                        minBufSize
+                    )
+                    audioRecord.startRecording()
+                    
+                    val buffer = ByteArray(minBufSize)
+                    
+                    while (isAudioRunning && !Thread.currentThread().isInterrupted) {
+                         try {
+                             // Accept client
+                             // Use a timeout so we can check isAudioRunning periodically if no one connects
+                             serverSocket.soTimeout = 2000 
+                             val client = serverSocket.accept()
+                             
+                             // Client connected
+                             val out = client.getOutputStream()
+                             
+                             while (isAudioRunning && client.isConnected && !client.isClosed) {
+                                 if (isMicMuted) {
+                                     // Send silence
+                                     java.util.Arrays.fill(buffer, 0)
+                                     try {
+                                        out.write(buffer, 0, minBufSize)
+                                        // Sleep to emulate timing? Or just write?
+                                        // Writing silence is fast, so let's sleep to avoid high CPU or flooding
+                                        // 44100 Hz, 16bit, mono -> 88200 bytes/sec
+                                        // minBufSize is approx 20-50ms usually.
+                                        val sleepTime = (minBufSize * 1000) / (44100 * 2)
+                                        Thread.sleep(sleepTime.toLong())
+                                     } catch (e: IOException) {
+                                        break
+                                     }
+                                 } else {
+                                     val read = audioRecord.read(buffer, 0, minBufSize)
+                                     if (read > 0) {
+                                         try {
+                                            out.write(buffer, 0, read)
+                                         } catch (e: IOException) {
+                                            // Client disconnected
+                                            break
+                                         }
+                                     }
+                                 }
+                             }
+                             client.close()
+                         } catch (e: java.net.SocketTimeoutException) {
+                             // invoke loop check
+                             continue
+                         } catch (e: IOException) {
+                             e.printStackTrace()
+                         }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                try {
+                    audioRecord?.stop()
+                    audioRecord?.release()
+                    serverSocket?.close()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        audioThread?.start()
+    }
+
+    private fun stopAudioServer() {
+        isAudioRunning = false
+        audioThread?.interrupt()
+        audioThread = null
     }
 
     private inner class MjpegServer(port: Int) : NanoHTTPD(port) {

@@ -31,8 +31,8 @@ class MainActivity : AppCompatActivity() {
              // Check if we should show rationale
              if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.CAMERA)) {
                  android.app.AlertDialog.Builder(this)
-                     .setTitle("Camera Permission Needed")
-                     .setMessage("This app uses the camera to function as a Baby Monitor. Please grant access.")
+                     .setTitle("Permissions Needed")
+                     .setMessage("This app uses the camera and microphone to function as a Baby Monitor. Please grant access.")
                      .setPositiveButton("OK") { _, _ ->
                          ActivityCompat.requestPermissions(
                             this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
@@ -70,7 +70,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(
-            android.Manifest.permission.CAMERA
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.RECORD_AUDIO
         )
     }
 }
