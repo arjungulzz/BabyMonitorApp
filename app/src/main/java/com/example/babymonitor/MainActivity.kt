@@ -15,6 +15,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Initialize Ads
+        com.google.android.gms.ads.MobileAds.initialize(this) {}
+
         findViewById<View>(R.id.cardBabyStation).setOnClickListener {
             checkPermissionsAndStart()
         }
@@ -22,6 +25,46 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.cardParentStation).setOnClickListener {
             startActivity(Intent(this, ParentStationActivity::class.java))
         }
+
+        setupMonetization()
+    }
+
+    private fun setupMonetization() {
+        val btnGoPro = findViewById<com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton>(R.id.btnGoPro)
+        val adView = findViewById<com.google.android.gms.ads.AdView>(R.id.adView)
+
+        if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
+            // Pro Mode
+            btnGoPro.visibility = View.GONE
+            adView.visibility = View.GONE
+        } else {
+            // Free Mode
+            btnGoPro.visibility = View.VISIBLE
+            adView.visibility = View.VISIBLE
+            val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
+            adView.loadAd(adRequest)
+
+            btnGoPro.setOnClickListener {
+                showProPurchaseDialog()
+            }
+        }
+    }
+
+    private fun showProPurchaseDialog() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Go Pro")
+            .setMessage("Remove ads and support development for just $4.99!") // Mock price
+            .setIcon(R.drawable.ic_crown)
+            .setPositiveButton("Purchase (Mock)") { _, _ ->
+                com.example.babymonitor.billing.BillingManager.purchasePro(this) {
+                    runOnUiThread {
+                        Toast.makeText(this, "Welcome to Pro Mode!", Toast.LENGTH_SHORT).show()
+                        setupMonetization() // Refresh UI
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun checkPermissionsAndStart() {

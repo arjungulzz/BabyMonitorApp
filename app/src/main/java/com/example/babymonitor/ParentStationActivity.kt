@@ -47,6 +47,17 @@ class ParentStationActivity : AppCompatActivity() {
         }
 
         setupRecyclerView()
+        setupAds()
+    }
+
+    private fun setupAds() {
+        val adView = findViewById<com.google.android.gms.ads.AdView>(R.id.adView)
+        if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
+            adView.visibility = View.GONE
+        } else {
+            val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
+            adView.loadAd(adRequest)
+        }
     }
 
     private fun setupRecyclerView() {
