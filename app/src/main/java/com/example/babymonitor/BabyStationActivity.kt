@@ -31,6 +31,11 @@ class BabyStationActivity : AppCompatActivity() {
     private var cameraControl: androidx.camera.core.CameraControl? = null
     private var isMicMuted = false
     private var isFlashOn = false
+    
+    private var nsdManager: NsdManager? = null
+    private var registrationListener: NsdManager.RegistrationListener? = null
+    private val currentFrame = AtomicReference<ByteArray>()
+    private lateinit var tvStatus: android.widget.TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
