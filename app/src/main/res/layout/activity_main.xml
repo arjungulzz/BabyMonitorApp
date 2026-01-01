@@ -9,31 +9,64 @@
     android:padding="24dp"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/tvTitle"
+    <LinearLayout
+        android:id="@+id/headerContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="24dp"
-        android:text="Baby Monitor"
-        android:textColor="@color/text_primary"
-        android:textSize="36sp"
-        android:fontFamily="sans-serif-light"
-        android:textStyle="bold" />
+        android:layout_marginTop="48dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👶"
+            android:textSize="64sp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-light"
+            android:text="Baby Monitor"
+            android:textColor="@color/text_primary"
+            android:textSize="32sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:text="For parents"
+            android:textColor="@color/text_secondary"
+            android:textSize="18sp"
+            android:letterSpacing="0.1"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="👨‍👩‍👧"
+            android:textSize="64sp"/>
+    </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/cardsContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:orientation="vertical"
-        android:gravity="center">
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingHorizontal="16dp">
 
         <!-- Baby Station Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardBabyStation"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="12dp"
+            android:layout_width="100dp"
+            android:layout_height="130dp"
+            android:layout_margin="8dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:cardBackgroundColor="@color/surface_white"
@@ -42,41 +75,35 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="24dp">
+                android:padding="8dp">
 
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginBottom="12dp"
                     android:src="@drawable/ic_baby_station"
                     app:tint="@color/primary_dark_blue" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Baby Station"
+                    android:text="Baby\nStation"
+                    android:gravity="center"
                     android:textColor="@color/text_primary"
-                    android:textSize="20sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Camera Mode"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Parent Station Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardParentStation"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="12dp"
+            android:layout_width="100dp"
+            android:layout_height="130dp"
+            android:layout_margin="8dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:cardBackgroundColor="@color/surface_white"
@@ -85,51 +112,137 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="24dp">
+                android:padding="8dp">
 
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginBottom="12dp"
                     android:src="@drawable/ic_parent_station"
                     app:tint="@color/secondary_dark_pink" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Parent Station"
+                    android:text="Parent\nStation"
+                    android:gravity="center"
                     android:textColor="@color/text_primary"
-                    android:textSize="20sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Go Pro Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardGoPro"
+            android:layout_width="100dp"
+            android:layout_height="130dp"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/surface_white"
+            app:strokeColor="#FFD700"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginBottom="12dp"
+                    android:src="@drawable/ic_crown"
+                    app:tint="#FFD700" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Viewer Mode"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:text="Go Pro\nPlan"
+                    android:gravity="center"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
-    
-    <!-- Go Pro Button -->
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/btnGoPro"
-        android:layout_width="wrap_content"
+
+    <!-- Support Options -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="16dp"
-        android:text="PRO"
-        android:textColor="@color/surface_white"
-        app:icon="@drawable/ic_crown"
-        app:iconTint="@color/surface_white"
-        app:backgroundTint="@color/primary_dark_blue"
-        app:elevation="4dp"
-        android:visibility="visible"/>
+        android:layout_below="@id/cardsContainer"
+        android:paddingHorizontal="24dp"
+        android:layout_marginTop="24dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFeedback"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Feedback"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary"
+            app:icon="@drawable/ic_feedback"
+            app:iconTint="@color/text_secondary"
+            app:iconGravity="textTop"
+            android:ems="1"
+            android:gravity="center"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReport"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Report"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary"
+            app:icon="@drawable/ic_report"
+            app:iconTint="@color/text_secondary"
+            app:iconGravity="textTop"
+            android:ems="1"
+            android:gravity="center"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSupport"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Buy Coffee"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary"
+            app:icon="@drawable/ic_coffee"
+            app:iconTint="@color/text_secondary"
+            app:iconGravity="textTop"
+            android:ems="1"
+            android:gravity="center"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAbout"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="About"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary"
+            app:icon="@drawable/ic_info"
+            app:iconTint="@color/text_secondary"
+            app:iconGravity="textTop"
+            android:ems="1"
+            android:gravity="center"/>
+    </LinearLayout>
 
     <!-- AdView -->
     <com.google.android.gms.ads.AdView
