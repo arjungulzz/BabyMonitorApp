@@ -31,10 +31,24 @@ class BabyStationActivity : AppCompatActivity() {
     private var registrationListener: NsdManager.RegistrationListener? = null
     private val currentFrame = AtomicReference<ByteArray>()
 
+    private lateinit var tvStatus: android.widget.TextView
+    private lateinit var statusIndicator: android.widget.ImageView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_baby_station)
+        
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+        tvStatus = findViewById(R.id.tvStatus)
+        // locate the image view inside the capsule
+        // The layout has LinearLayout > ImageView, separate IDs needed?
+        // Checking layout... "ImageView ... android:layout_marginEnd..." no ID.
+        // Wait, I need to add ID to the ImageView in activity_baby_station.xml first or find by traversal.
+        // Better to add logic to just update text for now, or assume ID if I added it?
+        // In the previous layout update, I gave ID to TextView (tvStatus) but NOT to ImageView.
+        // I will just update the Text for now.
+        
         startCamera()
         startServer()
         registerService()
@@ -99,12 +113,19 @@ class BabyStationActivity : AppCompatActivity() {
             Log.d(TAG, "Server started")
         } catch (e: IOException) {
             e.printStackTrace()
+            runOnUiThread {
+                tvStatus.text = "Server Error"
+            }
         }
     }
 
     private fun registerService() {
         val serviceInfo = NsdServiceInfo().apply {
-            serviceName = "BabyMonitor-${System.currentTimeMillis()}"
+            // sanitize the name to be safe for NSD
+            val deviceName = android.os.Build.MODEL ?: "Baby Monitor"
+            // NSD service names must be < 63 bytes.
+            val safeName = if (deviceName.length > 50) deviceName.substring(0, 50) else deviceName
+            serviceName = "$safeName-${System.currentTimeMillis() % 1000}" // Add random suffix to ensure uniqueness
             serviceType = "_http._tcp."
             port = 8080
         }
@@ -114,10 +135,16 @@ class BabyStationActivity : AppCompatActivity() {
         registrationListener = object : NsdManager.RegistrationListener {
             override fun onServiceRegistered(NsdServiceInfo: NsdServiceInfo) {
                 Log.d(TAG, "Service registered: ${NsdServiceInfo.serviceName}")
+                runOnUiThread {
+                    tvStatus.text = "Online: ${NsdServiceInfo.serviceName}"
+                }
             }
 
             override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
                 Log.e(TAG, "Registration failed: $errorCode")
+                runOnUiThread {
+                    tvStatus.text = "Registration Failed"
+                }
             }
 
             override fun onServiceUnregistered(arg0: NsdServiceInfo) {

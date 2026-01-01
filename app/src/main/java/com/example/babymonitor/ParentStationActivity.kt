@@ -47,23 +47,95 @@ class ParentStationActivity : AppCompatActivity() {
         }
 
         setupRecyclerView()
-        startDiscovery()
     }
 
     private fun setupRecyclerView() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = ServerAdapter(services) { service ->
-            val intent = Intent(this, StreamActivity::class.java)
-            val host = service.host
-            val port = service.port
-            if (host != null) {
-                val url = "http://${host.hostAddress}:$port"
-                intent.putExtra("STREAM_URL", url)
-                startActivity(intent)
-            }
+            showConnectingDialog(service)
         }
         recyclerView.adapter = adapter
+    }
+
+    private fun showConnectingDialog(service: NsdServiceInfo) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_connecting, null)
+        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBarConnecting)
+        val tvConnecting = dialogView.findViewById<TextView>(R.id.tvConnecting)
+        
+        tvConnecting.text = "Connecting to ${service.serviceName}..."
+        
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+            
+        dialog.show()
+        
+        // Dummy progress animation
+        var progress = 0
+        val runnable = object : Runnable {
+            override fun run() {
+                if (progress >= 100) {
+                    dialog.dismiss()
+                    startStream(service)
+                } else {
+                    progress += 4 // 25 steps * 40ms = 1 second approx (actually slightly more due to processing)
+                    progressBar.progress = progress
+                    handler.postDelayed(this, 40)
+                }
+            }
+        }
+        handler.post(runnable)
+    }
+
+    private fun startStream(service: NsdServiceInfo) {
+        val intent = Intent(this, StreamActivity::class.java)
+        val host = service.host
+        val port = service.port
+        if (host != null) {
+            val url = "http://${host.hostAddress}:$port"
+            intent.putExtra("STREAM_URL", url)
+            startActivity(intent)
+        }
+    }
+
+    // ... (rest of discovery logic) ...
+
+    class ServerAdapter(
+        private val services: List<NsdServiceInfo>,
+        private val onClick: (NsdServiceInfo) -> Unit
+    ) : RecyclerView.Adapter<ServerAdapter.ViewHolder>() {
+
+        class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+            val tvName: TextView = view.findViewById(R.id.tvServerName)
+            val tvIp: TextView = view.findViewById(R.id.tvServerIp)
+            val btnConnect: Button = view.findViewById(R.id.btnConnect)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_server_card, parent, false)
+            return ViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val service = services[position]
+            holder.tvName.text = service.serviceName
+            val host = service.host?.hostAddress ?: "Unknown"
+            holder.tvIp.text = "$host:${service.port}"
+            
+            holder.btnConnect.setOnClickListener { onClick(service) }
+            // Also allow clicking the card
+            holder.itemView.setOnClickListener { onClick(service) }
+        }
+
+        override fun getItemCount() = services.size
+    }
+
+    override fun onResume() {
+        super.onResume()
+        startDiscovery()
     }
 
     private fun startDiscovery() {
@@ -89,10 +161,10 @@ class ParentStationActivity : AppCompatActivity() {
             nsdManager.discoverServices("_http._tcp.", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
             isDiscovering = true
             
-            // Stop after 5 seconds
+            // Stop after 2 seconds
             handler.postDelayed({
                 stopDiscovery()
-            }, 5000)
+            }, 2000)
         } catch (e: Exception) {
             Log.e(TAG, "Start discovery failed", e)
             stopDiscovery()
@@ -192,30 +264,5 @@ class ParentStationActivity : AppCompatActivity() {
         private const val TAG = "ParentStationActivity"
     }
 
-    class ServerAdapter(
-        private val services: List<NsdServiceInfo>,
-        private val onClick: (NsdServiceInfo) -> Unit
-    ) : RecyclerView.Adapter<ServerAdapter.ViewHolder>() {
 
-        class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val tvName: TextView = view.findViewById(R.id.tvServerName)
-            val tvIp: TextView = view.findViewById(R.id.tvServerIp)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_server_card, parent, false)
-            return ViewHolder(view)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val service = services[position]
-            holder.tvName.text = service.serviceName
-            val host = service.host?.hostAddress ?: "Unknown"
-            holder.tvIp.text = "$host:${service.port}"
-            holder.itemView.setOnClickListener { onClick(service) }
-        }
-
-        override fun getItemCount() = services.size
-    }
 }

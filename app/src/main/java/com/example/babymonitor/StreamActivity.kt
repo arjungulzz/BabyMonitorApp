@@ -16,8 +16,13 @@ class StreamActivity : AppCompatActivity() {
         val webView = findViewById<WebView>(R.id.webView)
         val layoutError = findViewById<android.view.View>(R.id.layoutError)
         val btnBack = findViewById<android.view.View>(R.id.btnBack)
+        val btnDisconnect = findViewById<android.view.View>(R.id.btnDisconnect)
 
         btnBack.setOnClickListener {
+            finish()
+        }
+
+        btnDisconnect.setOnClickListener {
             finish()
         }
 
@@ -47,6 +52,7 @@ class StreamActivity : AppCompatActivity() {
             private fun showError() {
                 webView.visibility = android.view.View.GONE
                 layoutError.visibility = android.view.View.VISIBLE
+                btnDisconnect.visibility = android.view.View.GONE
             }
         }
         
