@@ -14,9 +14,42 @@ class StreamActivity : AppCompatActivity() {
         val url = intent.getStringExtra("STREAM_URL") ?: return
 
         val webView = findViewById<WebView>(R.id.webView)
+        val layoutError = findViewById<android.view.View>(R.id.layoutError)
+        val btnBack = findViewById<android.view.View>(R.id.btnBack)
+
+        btnBack.setOnClickListener {
+            finish()
+        }
+
         webView.settings.loadWithOverviewMode = true
         webView.settings.useWideViewPort = true
-        webView.webViewClient = WebViewClient()
+        
+        webView.webViewClient = object : WebViewClient() {
+            override fun onReceivedError(
+                view: WebView?,
+                errorCode: Int,
+                description: String?,
+                failingUrl: String?
+            ) {
+                super.onReceivedError(view, errorCode, description, failingUrl)
+                showError()
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: android.webkit.WebResourceRequest?,
+                error: android.webkit.WebResourceError?
+            ) {
+                super.onReceivedError(view, request, error)
+                showError()
+            }
+            
+            private fun showError() {
+                webView.visibility = android.view.View.GONE
+                layoutError.visibility = android.view.View.VISIBLE
+            }
+        }
+        
         webView.loadUrl(url)
     }
 }

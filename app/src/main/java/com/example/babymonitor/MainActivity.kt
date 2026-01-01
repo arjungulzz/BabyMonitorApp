@@ -3,7 +3,7 @@ package com.example.babymonitor
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Button
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -15,11 +15,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        findViewById<Button>(R.id.btnBabyStation).setOnClickListener {
+        findViewById<View>(R.id.cardBabyStation).setOnClickListener {
             checkPermissionsAndStart()
         }
 
-        findViewById<Button>(R.id.btnParentStation).setOnClickListener {
+        findViewById<View>(R.id.cardParentStation).setOnClickListener {
             startActivity(Intent(this, ParentStationActivity::class.java))
         }
     }

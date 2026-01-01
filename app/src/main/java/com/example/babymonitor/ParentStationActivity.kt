@@ -32,6 +32,9 @@ class ParentStationActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var isDiscovering = false
 
+    private lateinit var recyclerView: RecyclerView
+    private val foundServices = mutableListOf<NsdServiceInfo>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_parent_station)
@@ -48,7 +51,7 @@ class ParentStationActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = ServerAdapter(services) { service ->
             val intent = Intent(this, StreamActivity::class.java)
@@ -66,12 +69,18 @@ class ParentStationActivity : AppCompatActivity() {
     private fun startDiscovery() {
         if (isDiscovering) return
 
+        // Clear UI list immediately
         services.clear()
         adapter.notifyDataSetChanged()
         
-        tvStatus.text = "Searching for Baby Monitors..."
+        // Use temp list for accumulation
+        foundServices.clear()
+        
+        // Update UI state
+        tvStatus.text = "Searching... (Found 0)"
         progressBar.visibility = View.VISIBLE
         btnRefresh.isEnabled = false
+        recyclerView.visibility = View.GONE
         
         nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
         discoveryListener = createDiscoveryListener()
@@ -105,10 +114,17 @@ class ParentStationActivity : AppCompatActivity() {
         runOnUiThread {
             progressBar.visibility = View.GONE
             btnRefresh.isEnabled = true
+            
+            // Update main list from temp list
+            services.addAll(foundServices)
+            adapter.notifyDataSetChanged()
+            
             if (services.isEmpty()) {
                 tvStatus.text = "No Baby Monitors found. Please check connection and try again."
+                recyclerView.visibility = View.GONE
             } else {
-                tvStatus.text = "Found ${services.size} monitor(s)."
+                tvStatus.text = "Found ${services.size} monitor(s). Select to view."
+                recyclerView.visibility = View.VISIBLE
             }
         }
     }
@@ -129,10 +145,10 @@ class ParentStationActivity : AppCompatActivity() {
                     override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
                         Log.d(TAG, "Resolve Succeeded. $serviceInfo")
                         runOnUiThread {
-                            if (services.none { it.serviceName == serviceInfo.serviceName }) {
-                                services.add(serviceInfo)
-                                adapter.notifyDataSetChanged()
-                                tvStatus.text = "Found: ${serviceInfo.serviceName}..."
+                            // Add to temp list instead of main list
+                            if (foundServices.none { it.serviceName == serviceInfo.serviceName }) {
+                                foundServices.add(serviceInfo)
+                                tvStatus.text = "Searching... (Found ${foundServices.size})"
                             }
                         }
                     }
@@ -142,9 +158,13 @@ class ParentStationActivity : AppCompatActivity() {
 
         override fun onServiceLost(service: NsdServiceInfo) {
             Log.e(TAG, "service lost: $service")
+            // No-op during batch scan usually, or remove from temp list
             runOnUiThread {
-                services.removeAll { it.serviceName == service.serviceName }
-                adapter.notifyDataSetChanged()
+                 foundServices.removeAll { it.serviceName == service.serviceName }
+                 // Update count if currently scanning
+                 if (isDiscovering) {
+                     tvStatus.text = "Searching... (Found ${foundServices.size})"
+                 }
             }
         }
 
@@ -184,7 +204,7 @@ class ParentStationActivity : AppCompatActivity() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_server, parent, false)
+                .inflate(R.layout.item_server_card, parent, false)
             return ViewHolder(view)
         }
 
