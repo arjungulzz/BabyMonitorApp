@@ -68,12 +68,17 @@ class BabyStationActivity : AppCompatActivity() {
         val btnFlash = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnFlashToggle)
         val seekZoom = findViewById<android.widget.SeekBar>(R.id.seekBarZoom)
         val btnClose = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnCloseStation)
+        val btnInfo = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnInfo)
         
         val tvMicLabel = findViewById<android.widget.TextView>(R.id.tvMicLabel)
         val tvFlashLabel = findViewById<android.widget.TextView>(R.id.tvFlashLabel)
 
         btnClose.setOnClickListener {
             finish()
+        }
+
+        btnInfo.setOnClickListener {
+            showIpDialog()
         }
 
         btnFlip.setOnClickListener {
@@ -304,6 +309,48 @@ class BabyStationActivity : AppCompatActivity() {
     // Audio Server Logic
     private var isAudioRunning = false
     private var audioThread: Thread? = null
+
+    private fun showIpDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_ip_info, null)
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        
+        val tvIp = dialogView.findViewById<android.widget.TextView>(R.id.tvIpAddress)
+        val btnClose = dialogView.findViewById<android.view.View>(R.id.btnCloseDialog)
+        
+        val ip = getIpAddress()
+        tvIp.text = if (ip != null) "$ip:8080" else "Unknown IP"
+        
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+            resetInactivityTimer()
+        }
+        
+        dialog.show()
+        resetInactivityTimer()
+    }
+
+    private fun getIpAddress(): String? {
+        try {
+            val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+            while (interfaces.hasMoreElements()) {
+                val networkInterface = interfaces.nextElement()
+                val addresses = networkInterface.inetAddresses
+                while (addresses.hasMoreElements()) {
+                    val address = addresses.nextElement()
+                    if (!address.isLoopbackAddress && address is java.net.Inet4Address) {
+                        return address.hostAddress
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
 
     private fun startAudioServer() {
         if (isAudioRunning) return
