@@ -11,6 +11,8 @@ class StreamActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stream)
         supportActionBar?.hide()
+        
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         // Hide System Bars (Immersive)
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)

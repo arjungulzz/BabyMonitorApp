@@ -67,6 +67,14 @@ class BabyStationActivity : AppCompatActivity() {
         val btnMic = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnMicToggle)
         val btnFlash = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnFlashToggle)
         val seekZoom = findViewById<android.widget.SeekBar>(R.id.seekBarZoom)
+        val btnClose = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnCloseStation)
+        
+        val tvMicLabel = findViewById<android.widget.TextView>(R.id.tvMicLabel)
+        val tvFlashLabel = findViewById<android.widget.TextView>(R.id.tvFlashLabel)
+
+        btnClose.setOnClickListener {
+            finish()
+        }
 
         btnFlip.setOnClickListener {
             cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
@@ -81,6 +89,7 @@ class BabyStationActivity : AppCompatActivity() {
         btnMic.setOnClickListener {
             isMicMuted = !isMicMuted
             btnMic.setImageResource(if (isMicMuted) R.drawable.ic_mic_off else R.drawable.ic_mic_on)
+            tvMicLabel.text = if (isMicMuted) "Mic Off" else "Mic On"
             resetInactivityTimer()
         }
 
@@ -88,6 +97,8 @@ class BabyStationActivity : AppCompatActivity() {
             isFlashOn = !isFlashOn
             cameraControl?.enableTorch(isFlashOn)
             btnFlash.setImageResource(if (isFlashOn) R.drawable.ic_flash_on else R.drawable.ic_flash_off)
+            tvFlashLabel.text = if (isFlashOn) "Flash On" else "Flash Off"
+            
             btnFlash.backgroundTintList = android.content.res.ColorStateList.valueOf(
                 if (isFlashOn) ContextCompat.getColor(this, R.color.primary_dark_blue) else ContextCompat.getColor(this, R.color.surface_white)
             )
@@ -107,6 +118,25 @@ class BabyStationActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
         })
+
+        val btnZoomOut = findViewById<android.view.View>(R.id.btnZoomOut)
+        val btnZoomIn = findViewById<android.view.View>(R.id.btnZoomIn)
+
+        btnZoomOut.setOnClickListener {
+            val progress = seekZoom.progress
+            val newProgress = (progress - 10).coerceAtLeast(0)
+            seekZoom.progress = newProgress
+            cameraControl?.setLinearZoom(newProgress / 100f)
+            resetInactivityTimer()
+        }
+
+        btnZoomIn.setOnClickListener {
+            val progress = seekZoom.progress
+            val newProgress = (progress + 10).coerceAtMost(100)
+            seekZoom.progress = newProgress
+            cameraControl?.setLinearZoom(newProgress / 100f)
+            resetInactivityTimer()
+        }
     }
 
     private val ecoModeRunnable = Runnable { enableEcoMode(true) }
@@ -188,6 +218,21 @@ class BabyStationActivity : AppCompatActivity() {
                     this, cameraSelector, preview, imageAnalysis
                 )
                 cameraControl = camera.cameraControl
+                
+                val hasFlash = camera.cameraInfo.hasFlashUnit()
+                val btnFlash = findViewById<android.view.View>(R.id.btnFlashToggle)
+                btnFlash.isEnabled = hasFlash
+                btnFlash.alpha = if (hasFlash) 1.0f else 0.5f
+                if (!hasFlash && isFlashOn) {
+                    // Turn off if we switched to a camera with no flash
+                    isFlashOn = false
+                    val fBtn = btnFlash as com.google.android.material.floatingactionbutton.FloatingActionButton
+                    fBtn.setImageResource(R.drawable.ic_flash_off)
+                    fBtn.backgroundTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(this, R.color.surface_white))
+                    fBtn.imageTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(this, R.color.text_primary))
+                    findViewById<android.widget.TextView>(R.id.tvFlashLabel).text = "Flash Off"
+                }
+
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }

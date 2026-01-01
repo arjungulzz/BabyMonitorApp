@@ -46,6 +46,19 @@
             android:textStyle="bold" />
     </LinearLayout>
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnCloseStation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="24dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_close"
+        app:tint="@color/surface_white"
+        app:backgroundTint="@color/error_red"
+        app:fabSize="mini"
+        app:elevation="4dp" />
+
     <!-- Control Panel -->
     <LinearLayout
         android:id="@+id/layoutControls"
@@ -54,22 +67,28 @@
         android:orientation="vertical"
         android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:padding="24dp"
-        android:background="#80000000">
+        android:paddingTop="24dp"
+        android:paddingBottom="32dp"
+        android:paddingHorizontal="24dp"
+        android:background="@drawable/bg_control_panel">
 
-        <!-- Zoom Slider -->
+        <!-- Zoom Controls -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="24dp">
             
             <ImageView
+                android:id="@+id/btnZoomOut"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_zoom_out"
-                app:tint="@color/surface_white"/>
+                app:tint="@color/surface_white"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"/>
 
             <SeekBar
                 android:id="@+id/seekBarZoom"
@@ -82,47 +101,107 @@
                 android:thumbTint="@color/surface_white"/>
 
             <ImageView
+                android:id="@+id/btnZoomIn"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_zoom_in"
-                app:tint="@color/surface_white"/>
+                app:tint="@color/surface_white"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"/>
         </LinearLayout>
 
-        <!-- Buttons Row -->
+        <!-- Main Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center">
+            android:baselineAligned="false"
+            android:weightSum="3">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnFlipCamera"
-                android:layout_width="wrap_content"
+            <!-- Switch Cam -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                app:srcCompat="@drawable/ic_flip_camera"
-                app:tint="@color/text_primary"
-                app:backgroundTint="@color/surface_white"
-                app:fabSize="normal" />
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+                
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnFlipCamera"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:srcCompat="@drawable/ic_flip_camera"
+                    app:tint="@color/text_primary"
+                    app:backgroundTint="@color/surface_white"
+                    app:fabSize="normal" 
+                    app:elevation="0dp"/>
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Flip"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="12sp"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnMicToggle"
-                android:layout_width="wrap_content"
+            <!-- Mic Toggle -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                app:srcCompat="@drawable/ic_mic_on"
-                app:tint="@color/text_primary"
-                app:backgroundTint="@color/surface_white"
-                app:fabSize="normal" />
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnFlashToggle"
-                android:layout_width="wrap_content"
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnMicToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:srcCompat="@drawable/ic_mic_on"
+                    app:tint="@color/text_primary"
+                    app:backgroundTint="@color/surface_white"
+                    app:fabSize="normal"
+                    app:elevation="0dp"/>
+
+                <TextView
+                    android:id="@+id/tvMicLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mic On"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="12sp"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <!-- Flash Toggle -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/ic_flash_off"
-                app:tint="@color/text_primary"
-                app:backgroundTint="@color/surface_white"
-                app:fabSize="normal" />
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnFlashToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:srcCompat="@drawable/ic_flash_off"
+                    app:tint="@color/text_primary"
+                    app:backgroundTint="@color/surface_white"
+                    app:fabSize="normal"
+                    app:elevation="0dp"/>
+
+                <TextView
+                    android:id="@+id/tvFlashLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Flash Off"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="12sp"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+            
         </LinearLayout>
     </LinearLayout>
 
