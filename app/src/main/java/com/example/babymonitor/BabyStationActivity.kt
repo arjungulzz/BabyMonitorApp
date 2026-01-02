@@ -268,7 +268,7 @@ class BabyStationActivity : AppCompatActivity() {
                 var isMotion = false
                 val roi = currentRoi // Snapshot
                 
-                if (isPro) {
+                if (isPro && (roi.width() < 0.95f || roi.height() < 0.95f)) {
                     // Motion Detection on Y-Plane (First width*height bytes of NV21)
                     val width = imageProxy.width
                     val height = imageProxy.height
@@ -332,10 +332,19 @@ class BabyStationActivity : AppCompatActivity() {
                 val jpgBytes = yuvOutStream.toByteArray()
                 var bitmap = BitmapFactory.decodeByteArray(jpgBytes, 0, jpgBytes.size)
 
-                // 3. Rotate if needed
+                // 3. Rotate and Mirror if needed
+                rotationMatrix.reset()
                 if (rotationDegrees != 0) {
-                     rotationMatrix.reset()
                      rotationMatrix.postRotate(rotationDegrees.toFloat())
+                }
+                
+                // Auto-Mirror for Front Camera
+                if (cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
+                    rotationMatrix.postScale(-1f, 1f, bitmap.width / 2f, bitmap.height / 2f)
+                }
+                
+                // Only create new bitmap if transform is needed
+                if (rotationDegrees != 0 || cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
                      bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, rotationMatrix, true)
                 }
                 

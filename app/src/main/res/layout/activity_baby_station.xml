@@ -190,6 +190,8 @@
                     android:layout_marginTop="8dp"/>
             </LinearLayout>
 
+
+
             <!-- Switch Cam -->
             <LinearLayout
                 android:layout_width="0dp"
