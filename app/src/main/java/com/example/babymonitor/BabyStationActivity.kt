@@ -364,23 +364,68 @@ class BabyStationActivity : AppCompatActivity() {
                 }
                 
                 // 4. Draw Overlays (Motion / Noise) if Pro
+                // 4. Draw Overlays (Motion / Noise) if Pro
                 if (isPro && (isMotion || isNoiseAlert)) {
                     val mutableBitmap = if (bitmap.isMutable) bitmap else bitmap.copy(Bitmap.Config.ARGB_8888, true)
                     val canvas = android.graphics.Canvas(mutableBitmap)
 
-                    // Draw Motion Box
-                    if (isMotion) {
-                        rectScan.set(10, 10, mutableBitmap.width - 10, mutableBitmap.height - 10)
-                        canvas.drawRect(rectScan, paintAlert)
-                    }
+                    // Modern Slick Alert Style
+                    val strokeW = 24f
+                    val cornerRadius = 48f
+                    val slickRed = android.graphics.Color.parseColor("#E53935") // Soft yet urgent Red
                     
-                    // Draw Noise Alert
-                    if (isNoiseAlert) {
-                        paintAlert.style = android.graphics.Paint.Style.FILL
-                        paintAlert.textSize = 100f
-                        canvas.drawText("🔊 NOISE DETECTED", 50f, 200f, paintAlert)
-                        paintAlert.style = android.graphics.Paint.Style.STROKE // Reset
-                    }
+                    paintAlert.style = android.graphics.Paint.Style.STROKE
+                    paintAlert.strokeWidth = strokeW
+                    paintAlert.color = slickRed
+                    paintAlert.isAntiAlias = true
+                    
+                    // Draw Rounded Border (Inset to stay within bounds)
+                    val borderRect = android.graphics.RectF(strokeW/2, strokeW/2, mutableBitmap.width - strokeW/2, mutableBitmap.height - strokeW/2)
+                    canvas.drawRoundRect(borderRect, cornerRadius, cornerRadius, paintAlert)
+                    
+                    // Determine Label text
+                    val label = if (isMotion && isNoiseAlert) "MOTION & NOISE" else if (isMotion) "MOTION DETECTED" else "NOISE DETECTED"
+                    
+                    // Prepare Badge Paint (Filled Pill)
+                    paintAlert.style = android.graphics.Paint.Style.FILL
+                    paintAlert.textSize = mutableBitmap.height * 0.05f 
+                    paintAlert.typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.BOLD)
+                    paintAlert.textAlign = android.graphics.Paint.Align.CENTER
+                    paintAlert.setShadowLayer(12f, 0f, 6f, android.graphics.Color.parseColor("#80000000")) // Soft shadow
+                    
+                    val textWidth = paintAlert.measureText(label)
+                    val cx = mutableBitmap.width / 2f
+                    val paddingHorizontal = 60f
+                    val paddingVertical = 20f
+                    
+                    // Draw Floating Pill Badge
+                    val fontMetrics = paintAlert.fontMetrics
+                    val textHeight = fontMetrics.descent - fontMetrics.ascent
+                    val badgeHeight = textHeight + (paddingVertical * 2)
+                    val badgeWidth = textWidth + (paddingHorizontal * 2)
+                    val badgeTop = strokeW + 20f // Float slightly below top border
+                    
+                    val badgeRect = android.graphics.RectF(cx - badgeWidth/2, badgeTop, cx + badgeWidth/2, badgeTop + badgeHeight)
+                    canvas.drawRoundRect(badgeRect, 100f, 100f, paintAlert) // Fully rounded ends
+                    
+                    // Draw Text
+                    paintAlert.color = android.graphics.Color.WHITE
+                    paintAlert.clearShadowLayer() // Text shouldn't have the heavy shadow of the badge
+                    val baselineY = badgeRect.centerY() - ((fontMetrics.descent + fontMetrics.ascent) / 2)
+                    canvas.drawText(label, cx, baselineY, paintAlert)
+                    
+                    // Reset Paint for next frame
+                    paintAlert.color = android.graphics.Color.RED
+                    paintAlert.style = android.graphics.Paint.Style.STROKE
+                    paintAlert.strokeWidth = 20f 
+                    paintAlert.textAlign = android.graphics.Paint.Align.LEFT
+                    paintAlert.typeface = null
+                    
+                    bitmap = mutableBitmap
+                }
+                    paintAlert.style = android.graphics.Paint.Style.STROKE
+                    paintAlert.strokeWidth = 20f 
+                    paintAlert.textAlign = android.graphics.Paint.Align.LEFT
                     
                     bitmap = mutableBitmap
                 }
