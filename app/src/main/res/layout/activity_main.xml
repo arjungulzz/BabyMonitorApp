@@ -87,6 +87,7 @@
                     app:tint="@color/primary_dark_blue" />
 
                 <TextView
+                    android:id="@+id/tvBabyStationLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Baby\nStation"
@@ -124,6 +125,7 @@
                     app:tint="@color/secondary_dark_pink" />
 
                 <TextView
+                    android:id="@+id/tvParentStationLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Parent\nStation"

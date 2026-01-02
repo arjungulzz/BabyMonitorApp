@@ -70,6 +70,9 @@
             </intent-filter>
         </activity>
 
+        <service android:name=".BabyMarkerService" android:exported="false" />
+        <service android:name=".ParentMarkerService" android:exported="false" />
+
     </application>
 
 </manifest>

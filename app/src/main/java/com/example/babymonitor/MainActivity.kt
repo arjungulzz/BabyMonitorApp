@@ -11,20 +11,32 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
+    private val uiUpdateReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            if (intent?.action == "com.example.babymonitor.ACTION_REFRESH_UI") {
+                android.util.Log.d("BabyMonitor", "MainActivity: Received ACTION_REFRESH_UI Broadcast")
+                // Delay check to allow Service to fully stop (Race Condition Fix)
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    setupResumeUI()
+                }, 500)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        
+        // Register Live UI Receiver
+        val filter = android.content.IntentFilter("com.example.babymonitor.ACTION_REFRESH_UI")
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(uiUpdateReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(uiUpdateReceiver, filter)
+        }
 
         // Initialize Ads
         com.google.android.gms.ads.MobileAds.initialize(this) {}
-
-        findViewById<View>(R.id.cardBabyStation).setOnClickListener {
-            checkPermissionsAndStart()
-        }
-
-        findViewById<View>(R.id.cardParentStation).setOnClickListener {
-            startActivity(Intent(this, ParentStationActivity::class.java))
-        }
 
         findViewById<View>(R.id.btnFeedback).setOnClickListener {
             sendEmail("Feedback: Baby Monitor App")
@@ -49,6 +61,66 @@ class MainActivity : AppCompatActivity() {
 
         setupMonetization()
         checkCrashReport()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(uiUpdateReceiver)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupResumeUI()
+    }
+
+    private fun setupResumeUI() {
+        val isBabyActive = isServiceRunning(BabyMarkerService::class.java)
+        val isStreamActive = isServiceRunning(ParentMarkerService::class.java)
+        android.util.Log.d("BabyMonitor", "MainActivity: setupResumeUI. BabyActive=$isBabyActive, StreamActive=$isStreamActive")
+
+        val cardBaby = findViewById<android.view.View>(R.id.cardBabyStation)
+        val cardParent = findViewById<android.view.View>(R.id.cardParentStation)
+        val tvBabyLabel = findViewById<android.widget.TextView>(R.id.tvBabyStationLabel)
+        val tvParentLabel = findViewById<android.widget.TextView>(R.id.tvParentStationLabel)
+
+        // Default State
+        cardBaby.alpha = 1.0f
+        cardBaby.isEnabled = true
+        tvBabyLabel.text = "Baby\nStation"
+        cardBaby.setOnClickListener { checkPermissionsAndStart() }
+
+        cardParent.alpha = 1.0f
+        cardParent.isEnabled = true
+        tvParentLabel.text = "Parent\nStation"
+        cardParent.setOnClickListener { startActivity(Intent(this, ParentStationActivity::class.java)) }
+
+        // Smart Logic
+        if (isBabyActive) {
+            tvBabyLabel.text = "Resume\nBaby Station"
+            // Disable Parent Station to avoid conflict
+            cardParent.alpha = 0.5f 
+            cardParent.isEnabled = false
+        } else if (isStreamActive) {
+            tvParentLabel.text = "Resume\nParent Station"
+            // Redirect directly to StreamActivity (Resume)
+            cardParent.setOnClickListener { 
+                startActivity(Intent(this, StreamActivity::class.java)) 
+            }
+            // Disable Baby Station to avoid conflict
+            cardBaby.alpha = 0.5f
+            cardBaby.isEnabled = false
+        }
+    }
+    
+    private fun isServiceRunning(serviceClass: Class<*>): Boolean {
+        val activityManager = getSystemService(android.app.ActivityManager::class.java)
+        // Check running services - this is allowed for own application services even in newer Android versions
+        for (service in activityManager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.name == service.service.className) {
+                return true
+            }
+        }
+        return false
     }
 
     private fun checkCrashReport() {

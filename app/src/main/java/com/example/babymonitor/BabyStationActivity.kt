@@ -41,6 +41,12 @@ class BabyStationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_baby_station)
         supportActionBar?.hide()
+
+        android.util.Log.d(TAG, "BabyStationActivity: onCreate. SDK=${android.os.Build.VERSION.SDK_INT}")
+
+        isRunning = true
+
+
         
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         
@@ -62,7 +68,111 @@ class BabyStationActivity : AppCompatActivity() {
         registerService()
 
         resetInactivityTimer()
+        
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                cancelServiceAndBroadcast()
+                finish()
+            }
+        })
+        
+        setupAutoPiP()
     }
+    
+    
+    private fun enableBasicAutoPiP() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val isLandscape = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+            val ratio = if (isLandscape) android.util.Rational(16, 9) else android.util.Rational(9, 16)
+            
+            android.util.Log.d(TAG, "enableBasicAutoPiP: Setting default $ratio params immediately.")
+            val params = android.app.PictureInPictureParams.Builder()
+                .setAspectRatio(ratio)
+                .setAutoEnterEnabled(true)
+                .build()
+            setPictureInPictureParams(params)
+        }
+    }
+
+    private fun setupAutoPiP() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            updatePiPParams()
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            updatePiPParams()
+        }
+    }
+
+    private fun updatePiPParams() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            android.util.Log.d(TAG, "updatePiPParams: Calculating PiP Params...")
+            val windowMetrics = windowManager.currentWindowMetrics
+            val bounds = windowMetrics.bounds
+            val width = bounds.width()
+            val height = bounds.height()
+            
+            android.util.Log.d(TAG, "updatePiPParams: Bounds W=$width H=$height")
+            
+            var r = width.toFloat() / height.toFloat()
+            // Android PiP requires ratio between 1/2.39 and 2.39/1
+            if (r < 0.41841004184f) r = 0.41841004184f
+            if (r > 2.39f) r = 2.39f
+            
+            // Convert back to simple rational approximation or use 10000 base
+            val numerator = (r * 10000).toInt()
+            val denominator = 10000
+            val ratio = android.util.Rational(numerator, denominator)
+             
+            val params = android.app.PictureInPictureParams.Builder()
+                .setAspectRatio(ratio)
+                .setAutoEnterEnabled(true)
+                .build()
+            setPictureInPictureParams(params)
+            android.util.Log.d(TAG, "setPictureInPictureParams Called with Ratio: $ratio (Original w:$width h:$height)")
+        }
+    }
+    
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        android.util.Log.d(TAG, "onPictureInPictureModeChanged: $isInPictureInPictureMode")
+        
+        val controls = findViewById<android.view.View>(R.id.layoutControls)
+        val topBar = findViewById<android.view.View>(R.id.topBar)
+        val gradient = findViewById<android.view.View>(R.id.gradientOverlay)
+        val roiOverlay = findViewById<android.view.View>(R.id.roiOverlay)
+        val ecoOverlay = findViewById<android.view.View>(R.id.overlayEcoMode)
+
+        if (isInPictureInPictureMode) {
+            supportActionBar?.hide()
+            controls.visibility = android.view.View.GONE
+            topBar.visibility = android.view.View.GONE
+            gradient.visibility = android.view.View.GONE
+            roiOverlay.visibility = android.view.View.GONE
+            ecoOverlay.visibility = android.view.View.GONE
+            
+            // Disable Eco Mode Timer in PiP
+            handler.removeCallbacks(ecoModeRunnable)
+            
+            // Ensure brightness is restored if Eco Mode was on
+            val layoutParams = window.attributes
+            layoutParams.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+            window.attributes = layoutParams
+        } else {
+            supportActionBar?.hide()
+            controls.visibility = android.view.View.VISIBLE
+            topBar.visibility = android.view.View.VISIBLE
+            gradient.visibility = android.view.View.VISIBLE
+            roiOverlay.visibility = android.view.View.VISIBLE
+            // Eco Mode remains hidden until re-enabled
+            ecoOverlay.visibility = android.view.View.GONE
+        }
+    }
+
+
 
     private var isPro = false
     private var isNoiseAlert = false
@@ -93,6 +203,7 @@ class BabyStationActivity : AppCompatActivity() {
         val tvFlashLabel = findViewById<android.widget.TextView>(R.id.tvFlashLabel)
 
         btnClose.setOnClickListener {
+            cancelServiceAndBroadcast()
             finish()
         }
 
@@ -423,12 +534,7 @@ class BabyStationActivity : AppCompatActivity() {
                     
                     bitmap = mutableBitmap
                 }
-                    paintAlert.style = android.graphics.Paint.Style.STROKE
-                    paintAlert.strokeWidth = 20f 
-                    paintAlert.textAlign = android.graphics.Paint.Align.LEFT
-                    
-                    bitmap = mutableBitmap
-                }
+
 
                 // 5. Compress final frame
                 jpegOutStream.reset() // Reuse buffer
@@ -520,11 +626,56 @@ class BabyStationActivity : AppCompatActivity() {
         )
     }
 
+
+    override fun onResume() {
+        super.onResume()
+        android.util.Log.d(TAG, "BabyStationActivity: onResume")
+        
+        // Re-enable Auto-PiP every time we come to foreground to ensure it's active
+        enableBasicAutoPiP()
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            setPictureInPictureParams(android.app.PictureInPictureParams.Builder().setAutoEnterEnabled(true).build())
+        }
+        
+        startAudioServer()
+        startService(android.content.Intent(this, BabyMarkerService::class.java))
+        
+        // Ensure window is attached and measured before calculating PiP params
+        window.decorView.post {
+            setupAutoPiP()
+        }
+    }
+    
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            setupAutoPiP() 
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        android.util.Log.d("BabyMonitor", "BabyStation: onStop. Executing Unconditional Stop.")
+        cancelServiceAndBroadcast()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        android.util.Log.d("BabyMonitor", "BabyStation: onDestroy")
+        isRunning = false
+        cancelServiceAndBroadcast()
         server.stop()
         stopAudioServer()
         nsdManager?.unregisterService(registrationListener)
+    }
+
+    private fun cancelServiceAndBroadcast() {
+        android.util.Log.d("BabyMonitor", "BabyStation: Cancelling Service and Broadcasting Update")
+        stopService(android.content.Intent(this, BabyMarkerService::class.java))
+        val intent = android.content.Intent("com.example.babymonitor.ACTION_REFRESH_UI")
+        intent.setPackage(packageName)
+        sendBroadcast(intent)
     }
 
     // Audio Server Logic
@@ -745,45 +896,20 @@ class BabyStationActivity : AppCompatActivity() {
     // Picture-in-Picture Logic
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
+        android.util.Log.d(TAG, "onUserLeaveHint Triggered")
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
              val params = android.app.PictureInPictureParams.Builder()
                 .setAspectRatio(android.util.Rational(9, 16))
                 .build()
-            enterPictureInPictureMode(params)
+            val result = enterPictureInPictureMode(params)
+            android.util.Log.d(TAG, "enterPictureInPictureMode Result: $result")
         }
     }
 
-    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration) {
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        
-        val controls = findViewById<android.view.View>(R.id.layoutControls)
-        val topBar = findViewById<android.view.View>(R.id.topBar)
-        val gradient = findViewById<android.view.View>(R.id.gradientOverlay)
-        val roiOverlay = findViewById<android.view.View>(R.id.roiOverlay)
-        val ecoOverlay = findViewById<android.view.View>(R.id.overlayEcoMode)
 
-        if (isInPictureInPictureMode) {
-            controls.visibility = android.view.View.GONE
-            topBar.visibility = android.view.View.GONE
-            gradient.visibility = android.view.View.GONE
-            roiOverlay.visibility = android.view.View.GONE
-            ecoOverlay.visibility = android.view.View.GONE
-            
-            // Ensure brightness is restored if Eco Mode was on
-            val layoutParams = window.attributes
-            layoutParams.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-            window.attributes = layoutParams
-        } else {
-            controls.visibility = android.view.View.VISIBLE
-            topBar.visibility = android.view.View.VISIBLE
-            gradient.visibility = android.view.View.VISIBLE
-            roiOverlay.visibility = android.view.View.VISIBLE
-            // Eco Mode remains hidden until re-enabled
-            ecoOverlay.visibility = android.view.View.GONE
-        }
-    }
 
     companion object {
+        var isRunning = false
         private val handler = android.os.Handler(android.os.Looper.getMainLooper())
         private const val TAG = "BabyStationActivity"
     }
