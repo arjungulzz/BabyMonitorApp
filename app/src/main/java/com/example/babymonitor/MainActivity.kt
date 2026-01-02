@@ -27,6 +27,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         
+        // Handle edge-to-edge display and system bars
+        setupWindowInsets()
+        
         // Register Live UI Receiver
         val filter = android.content.IntentFilter("com.example.babymonitor.ACTION_REFRESH_UI")
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -49,6 +52,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnSupport).setOnClickListener {
              val browserIntent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.buymeacoffee.com"))
              try { startActivity(browserIntent) } catch (e: Exception) { e.printStackTrace() }
+        }
+
+        findViewById<View>(R.id.btnRate).setOnClickListener {
+            requestInAppReview()
         }
 
         findViewById<View>(R.id.btnAbout).setOnClickListener {
@@ -173,10 +180,12 @@ class MainActivity : AppCompatActivity() {
         val cardGoPro = findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardGoPro)
         val adView = findViewById<com.google.android.gms.ads.AdView>(R.id.adView)
 
-        // Access inner views dynamically since they don't have unique IDs
-        val layout = cardGoPro.getChildAt(0) as android.widget.LinearLayout
-        val tvGoPro = layout.getChildAt(1) as android.widget.TextView
-        val imgGoPro = layout.getChildAt(0) as android.widget.ImageView
+        // Access inner views - new layout has: LinearLayout > ImageView, LinearLayout (with TextViews), TextView
+        val rootLayout = cardGoPro.getChildAt(0) as android.widget.LinearLayout
+        val imgGoPro = rootLayout.getChildAt(0) as android.widget.ImageView
+        val textContainer = rootLayout.getChildAt(1) as android.widget.LinearLayout
+        val tvTitle = textContainer.getChildAt(0) as android.widget.TextView
+        val tvSubtitle = textContainer.getChildAt(1) as android.widget.TextView
 
         if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
             // Pro Mode
@@ -187,8 +196,9 @@ class MainActivity : AppCompatActivity() {
             cardGoPro.strokeColor = android.graphics.Color.parseColor("#FFD700") // Gold
             cardGoPro.setCardBackgroundColor(android.graphics.Color.parseColor("#10FFD700")) // Subtle Gold Tint
             
-            tvGoPro.text = "Pro\nMember"
-            tvGoPro.setTextColor(android.graphics.Color.parseColor("#FFD700"))
+            tvTitle.text = "Pro Member"
+            tvSubtitle.text = "Thank you for your support!"
+            imgGoPro.setColorFilter(android.graphics.Color.parseColor("#FFD700"))
             
             cardGoPro.setOnClickListener {
                 android.widget.Toast.makeText(this, "You are a Pro Member! \uD83D\uDC51", android.widget.Toast.LENGTH_SHORT).show()
@@ -201,9 +211,11 @@ class MainActivity : AppCompatActivity() {
 
             cardGoPro.visibility = android.view.View.VISIBLE
             cardGoPro.setCardBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.surface_white))
-            tvGoPro.text = "Go Pro\nPlan"
-             // Reset text color
-             tvGoPro.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
+            tvTitle.text = "Upgrade to Pro"
+            tvSubtitle.text = "Remove ads • Premium features"
+            // Reset text colors
+            tvTitle.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
+            tvSubtitle.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary))
 
             cardGoPro.setOnClickListener {
                 showProPurchaseDialog()
@@ -268,6 +280,71 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun requestInAppReview() {
+        val manager = com.google.android.play.core.review.ReviewManagerFactory.create(this)
+        val request = manager.requestReviewFlow()
+        
+        request.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                // Got the ReviewInfo object
+                val reviewInfo = task.result
+                val flow = manager.launchReviewFlow(this, reviewInfo)
+                flow.addOnCompleteListener {
+                    // Review flow has finished
+                    android.util.Log.d("InAppReview", "Review flow completed")
+                    
+                    // In development/testing, the dialog may not show
+                    // Offer alternative to open Play Store
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        showPlayStoreOption()
+                    }, 500)
+                }
+            } else {
+                // There was an error, fallback to Play Store
+                android.util.Log.e("InAppReview", "Review flow failed", task.exception)
+                showPlayStoreOption()
+            }
+        }
+    }
+    
+    private fun showPlayStoreOption() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Rate Baby Monitor")
+            .setMessage("Would you like to rate us on the Play Store?")
+            .setPositiveButton("Rate Now") { _, _ ->
+                openPlayStore()
+            }
+            .setNegativeButton("Maybe Later", null)
+            .show()
+    }
+    
+    private fun openPlayStore() {
+        try {
+            // Try to open Play Store app
+            val uri = android.net.Uri.parse("market://details?id=$packageName")
+            startActivity(Intent(Intent.ACTION_VIEW, uri))
+        } catch (e: android.content.ActivityNotFoundException) {
+            // Play Store app not installed, open in browser
+            val uri = android.net.Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
+            startActivity(Intent(Intent.ACTION_VIEW, uri))
+        }
+    }
+
+    private fun setupWindowInsets() {
+        val adView = findViewById<com.google.android.gms.ads.AdView>(R.id.adView)
+        
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(adView) { view, insets ->
+            val systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            view.setPadding(
+                view.paddingLeft,
+                view.paddingTop,
+                view.paddingRight,
+                systemBars.bottom
+            )
+            insets
         }
     }
 

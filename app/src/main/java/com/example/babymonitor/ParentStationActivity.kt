@@ -52,6 +52,19 @@ class ParentStationActivity : AppCompatActivity() {
 
     private fun setupAds() {
         val adView = findViewById<com.google.android.gms.ads.AdView>(R.id.adView)
+        
+        // Handle window insets for navigation bars
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(adView) { view, insets ->
+            val systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            view.setPadding(
+                view.paddingLeft,
+                view.paddingTop,
+                view.paddingRight,
+                systemBars.bottom
+            )
+            insets
+        }
+        
         if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
             adView.visibility = View.GONE
         } else {

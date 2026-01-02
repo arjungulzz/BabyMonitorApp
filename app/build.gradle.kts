@@ -49,6 +49,10 @@ dependencies {
     implementation(libs.nanohttpd)
     implementation(libs.google.ads)
     implementation(libs.guava)
+    
+    // In-App Review
+    implementation("com.google.android.play:review-ktx:2.0.1")
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

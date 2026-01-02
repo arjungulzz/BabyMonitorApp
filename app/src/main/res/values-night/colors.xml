@@ -1,30 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Modern Pastel Palette (Night) -->
-    <!-- Keep brand colors but maybe slightly desaturated for night comfort if needed, or keep same for brand identity -->
-    <color name="primary_pastel_blue">#AEC6CF</color> 
-    <color name="primary_dark_blue">#779ECB</color>
-    <color name="secondary_pastel_pink">#FFB7B2</color>
-    <color name="secondary_dark_pink">#FF6961</color>
+    <!-- Dark Mode Color Palette -->
     
-    <!-- Backgrounds: Dark Grey/Black -->
-    <color name="background_light">#121212</color> <!-- Reusing name 'background_light' but giving it dark value for night resource -->
-    <color name="surface_white">#1E1E1E</color>  <!-- Reusing name 'surface_white' -> Dark Surface -->
+    <!-- Primary Colors - Lighter blues for dark mode -->
+    <color name="primary_blue">#6BA3E8</color>
+    <color name="primary_dark_blue">#4A90E2</color>
+    <color name="primary_light_blue">#8BB8ED</color>
     
-    <!-- Text: Light/White -->
-    <color name="text_primary">#E0E0E0</color>
-    <color name="text_secondary">#B0B0B0</color>
+    <!-- Accent Colors - Softer coral for dark mode -->
+    <color name="accent_coral">#FF8FB3</color>
+    <color name="accent_light_coral">#FFB0C9</color>
+    <color name="accent_dark_coral">#FF6B9D</color>
     
-    <color name="success_green">#77DD77</color>
-    <color name="error_red">#FF6961</color>
-    <color name="accent_pastel_blue">#89CFF0</color>
-
-    <!-- Legacy mapped -->
-    <color name="purple_200">@color/primary_pastel_blue</color>
-    <color name="purple_500">@color/primary_dark_blue</color>
+    <!-- Background & Surface - Dark backgrounds -->
+    <color name="background_light">#121212</color>
+    <color name="surface_white">#1E1E1E</color>
+    <color name="surface_card">#252525</color>
+    <color name="surface_elevated">#2C2C2C</color>
+    
+    <!-- Text Colors - Light text for dark backgrounds -->
+    <color name="text_primary">#E8EAED</color>
+    <color name="text_secondary">#9AA0A6</color>
+    <color name="text_tertiary">#6B7280</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    
+    <!-- Status Colors - Adjusted for dark mode -->
+    <color name="success_green">#34D399</color>
+    <color name="success_light">#6EE7B7</color>
+    <color name="error_red">#F87171</color>
+    <color name="error_light">#FCA5A5</color>
+    <color name="warning_yellow">#FBBF24</color>
+    <color name="info_blue">#60A5FA</color>
+    
+    <!-- Glassmorphism & Overlays - Adjusted for dark mode -->
+    <color name="overlay_dark">#B3000000</color>
+    <color name="overlay_light">#40FFFFFF</color>
+    <color name="glass_surface">#33FFFFFF</color>
+    <color name="glass_border">#1AFFFFFF</color>
+    
+    <!-- Shadows & Dividers - Lighter for dark mode -->
+    <color name="shadow_color">#40000000</color>
+    <color name="divider_color">#3C3C3C</color>
+    
+    <!-- Legacy compatibility -->
+    <color name="primary_pastel_blue">@color/primary_light_blue</color>
+    <color name="secondary_pastel_pink">@color/accent_light_coral</color>
+    <color name="secondary_dark_pink">@color/accent_dark_coral</color>
+    <color name="accent_pastel_blue">@color/primary_blue</color>
+    
+    <color name="purple_200">@color/primary_light_blue</color>
+    <color name="purple_500">@color/primary_blue</color>
     <color name="purple_700">@color/primary_dark_blue</color>
-    <color name="teal_200">@color/secondary_pastel_pink</color>
-    <color name="teal_700">@color/secondary_dark_pink</color>
-    <color name="black">@color/text_primary</color> 
+    <color name="teal_200">@color/accent_light_coral</color>
+    <color name="teal_700">@color/accent_dark_coral</color>
+    <color name="black">@color/text_primary</color>
     <color name="white">@color/surface_white</color>
 </resources>
