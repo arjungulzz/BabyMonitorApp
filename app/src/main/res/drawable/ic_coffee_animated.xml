@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="24dp"
+            android:height="24dp"
+            android:viewportWidth="24"
+            android:viewportHeight="24">
+            
+            <!-- Coffee cup outline -->
+            <path
+                android:name="cup"
+                android:pathData="M4,19h16v2H4V19z M20,3H4v10c0,2.21,1.79,4,4,4h6c2.21,0,4-1.79,4-4v-3h2c1.11,0,2-0.89,2-2V5C22,3.89,21.11,3,20,3z M20,8h-2V5h2V8z M4,13V5h12v8c0,1.1-0.9,2-2,2H6C4.9,15,4,14.1,4,13z"
+                android:fillColor="#FFFFFF"
+                android:fillAlpha="0.9"/>
+            
+            <!-- Coffee fill (animated) -->
+            <path
+                android:name="coffeeFill"
+                android:pathData="M4,13V13c0,1.1,0.9,2,2,2h8c1.1,0,2-0.9,2-2V13H4z"
+                android:fillColor="#FFFFFF"
+                android:fillAlpha="0"/>
+            
+            <!-- Steam 1 -->
+            <path
+                android:name="steam1"
+                android:pathData="M7,2C7,2,7,3,7,3.5C7,4,7,4,7,4"
+                android:strokeColor="#FFFFFF"
+                android:strokeWidth="0.8"
+                android:strokeLineCap="round"
+                android:fillAlpha="0"
+                android:strokeAlpha="0"/>
+            
+            <!-- Steam 2 -->
+            <path
+                android:name="steam2"
+                android:pathData="M10,2C10,2,10,3,10,3.5C10,4,10,4,10,4"
+                android:strokeColor="#FFFFFF"
+                android:strokeWidth="0.8"
+                android:strokeLineCap="round"
+                android:fillAlpha="0"
+                android:strokeAlpha="0"/>
+            
+            <!-- Steam 3 -->
+            <path
+                android:name="steam3"
+                android:pathData="M13,2C13,2,13,3,13,3.5C13,4,13,4,13,4"
+                android:strokeColor="#FFFFFF"
+                android:strokeWidth="0.8"
+                android:strokeLineCap="round"
+                android:fillAlpha="0"
+                android:strokeAlpha="0"/>
+        </vector>
+    </aapt:attr>
+    
+    <!-- Coffee fill animation -->
+    <target android:name="coffeeFill">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="fillAlpha"
+                android:duration="1500"
+                android:valueFrom="0"
+                android:valueTo="0.8"
+                android:interpolator="@android:interpolator/decelerate_cubic"
+                android:repeatCount="infinite"
+                android:repeatMode="restart"/>
+        </aapt:attr>
+    </target>
+    
+    <!-- Steam 1 animation -->
+    <target android:name="steam1">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="strokeAlpha"
+                    android:duration="2000"
+                    android:valueFrom="0"
+                    android:valueTo="0.6"
+                    android:startOffset="500"
+                    android:interpolator="@android:interpolator/accelerate_decelerate"
+                    android:repeatCount="infinite"
+                    android:repeatMode="restart"/>
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="2000"
+                    android:valueFrom="0"
+                    android:valueTo="-3"
+                    android:startOffset="500"
+                    android:interpolator="@android:interpolator/accelerate_decelerate"
+                    android:repeatCount="infinite"
+                    android:repeatMode="restart"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Steam 2 animation -->
+    <target android:name="steam2">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="strokeAlpha"
+                    android:duration="2000"
+                    android:valueFrom="0"
+                    android:valueTo="0.6"
+                    android:startOffset="700"
+                    android:interpolator="@android:interpolator/accelerate_decelerate"
+                    android:repeatCount="infinite"
+                    android:repeatMode="restart"/>
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="2000"
+                    android:valueFrom="0"
+                    android:valueTo="-3"
+                    android:startOffset="700"
+                    android:interpolator="@android:interpolator/accelerate_decelerate"
+                    android:repeatCount="infinite"
+                    android:repeatMode="restart"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Steam 3 animation -->
+    <target android:name="steam3">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="strokeAlpha"
+                    android:duration="2000"
+                    android:valueFrom="0"
+                    android:valueTo="0.6"
+                    android:startOffset="900"
+                    android:interpolator="@android:interpolator/accelerate_decelerate"
+                    android:repeatCount="infinite"
+                    android:repeatMode="restart"/>
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="2000"
+                    android:valueFrom="0"
+                    android:valueTo="-3"
+                    android:startOffset="900"
+                    android:interpolator="@android:interpolator/accelerate_decelerate"
+                    android:repeatCount="infinite"
+                    android:repeatMode="restart"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+</animated-vector>

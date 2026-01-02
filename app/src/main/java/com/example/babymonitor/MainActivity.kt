@@ -42,23 +42,28 @@ class MainActivity : AppCompatActivity() {
         com.google.android.gms.ads.MobileAds.initialize(this) {}
 
         findViewById<View>(R.id.btnFeedback).setOnClickListener {
+            animateButtonPress(it)
             sendEmail("Feedback: Baby Monitor App")
         }
 
         findViewById<View>(R.id.btnReport).setOnClickListener {
+            animateButtonPress(it)
             sendEmail("Issue Report: Baby Monitor App")
         }
 
         findViewById<View>(R.id.btnSupport).setOnClickListener {
+            animateButtonPress(it)
              val browserIntent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.buymeacoffee.com"))
              try { startActivity(browserIntent) } catch (e: Exception) { e.printStackTrace() }
         }
 
         findViewById<View>(R.id.btnRate).setOnClickListener {
+            animateButtonPress(it)
             requestInAppReview()
         }
 
         findViewById<View>(R.id.btnAbout).setOnClickListener {
+            animateButtonPress(it)
             android.app.AlertDialog.Builder(this)
                 .setTitle("About Baby Monitor")
                 .setMessage("Version 1.0\n\nA simple, secure baby monitor for your home.\n\nMade with ❤️")
@@ -67,6 +72,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupMonetization()
+        setupEnterAnimations()
         checkCrashReport()
     }
     
@@ -179,29 +185,19 @@ class MainActivity : AppCompatActivity() {
     private fun setupMonetization() {
         val cardGoPro = findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardGoPro)
         val adView = findViewById<com.google.android.gms.ads.AdView>(R.id.adView)
-
-        // Access inner views - new layout has: LinearLayout > ImageView, LinearLayout (with TextViews), TextView
-        val rootLayout = cardGoPro.getChildAt(0) as android.widget.LinearLayout
-        val imgGoPro = rootLayout.getChildAt(0) as android.widget.ImageView
-        val textContainer = rootLayout.getChildAt(1) as android.widget.LinearLayout
-        val tvTitle = textContainer.getChildAt(0) as android.widget.TextView
-        val tvSubtitle = textContainer.getChildAt(1) as android.widget.TextView
+        val tvProTitle = findViewById<android.widget.TextView>(R.id.tvProTitle)
+        val tvProSubtitle = findViewById<android.widget.TextView>(R.id.tvProSubtitle)
 
         if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
             // Pro Mode
             adView.visibility = android.view.View.GONE
             
-            // Show Pro Badge
-            cardGoPro.visibility = android.view.View.VISIBLE
-            cardGoPro.strokeColor = android.graphics.Color.parseColor("#FFD700") // Gold
-            cardGoPro.setCardBackgroundColor(android.graphics.Color.parseColor("#10FFD700")) // Subtle Gold Tint
-            
-            tvTitle.text = "Pro Member"
-            tvSubtitle.text = "Thank you for your support!"
-            imgGoPro.setColorFilter(android.graphics.Color.parseColor("#FFD700"))
+            // Update Pro Banner
+            tvProTitle.text = "Pro Member"
+            tvProSubtitle.text = "Thank you for your support! 👑"
             
             cardGoPro.setOnClickListener {
-                android.widget.Toast.makeText(this, "You are a Pro Member! \uD83D\uDC51", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(this, "You are a Pro Member! 👑", android.widget.Toast.LENGTH_SHORT).show()
             }
         } else {
             // Free Mode
@@ -209,14 +205,7 @@ class MainActivity : AppCompatActivity() {
             val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
             adView.loadAd(adRequest)
 
-            cardGoPro.visibility = android.view.View.VISIBLE
-            cardGoPro.setCardBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.surface_white))
-            tvTitle.text = "Upgrade to Pro"
-            tvSubtitle.text = "Remove ads • Premium features"
-            // Reset text colors
-            tvTitle.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
-            tvSubtitle.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary))
-
+            // Default Pro Banner text (already set in XML)
             cardGoPro.setOnClickListener {
                 showProPurchaseDialog()
             }
@@ -332,13 +321,105 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(Intent.ACTION_VIEW, uri))
         }
     }
+    
+    private fun setupEnterAnimations() {
+        // Hero section animations
+        val tvEmoji = findViewById<android.widget.TextView>(R.id.tvEmoji)
+        val tvTitle = findViewById<android.widget.TextView>(R.id.tvTitle)
+        val tvTagline = findViewById<android.widget.TextView>(R.id.tvTagline)
+        
+        // Cards
+        val cardBaby = findViewById<View>(R.id.cardBabyStation)
+        val cardParent = findViewById<View>(R.id.cardParentStation)
+        val cardPro = findViewById<View>(R.id.cardGoPro)
+        
+        // Support section
+        val supportContainer = findViewById<View>(R.id.supportContainer)
+        val btnSupport = findViewById<View>(R.id.btnSupport)
+        
+        // Animate emoji with scale + fade
+        tvEmoji.animate()
+            .alpha(1f)
+            .scaleX(1.1f)
+            .scaleY(1.1f)
+            .setDuration(600)
+            .setStartDelay(100)
+            .withEndAction {
+                tvEmoji.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(300)
+                    .start()
+            }
+            .start()
+        
+        // Animate title
+        tvTitle.animate()
+            .alpha(1f)
+            .setDuration(500)
+            .setStartDelay(300)
+            .start()
+        
+        // Animate tagline
+        tvTagline.animate()
+            .alpha(1f)
+            .setDuration(500)
+            .setStartDelay(450)
+            .start()
+        
+        // Animate cards with stagger
+        animateCard(cardBaby, 600)
+        animateCard(cardParent, 750)
+        
+        // Pro banner needs larger initial translation to avoid overlap
+        cardPro.translationY = 100f
+        animateCard(cardPro, 900)
+        
+        // Animate support section
+        supportContainer.animate()
+            .alpha(1f)
+            .setDuration(500)
+            .setStartDelay(1050)
+            .start()
+        
+        btnSupport.animate()
+            .alpha(1f)
+            .setDuration(500)
+            .setStartDelay(1150)
+            .start()
+    }
+    
+    private fun animateButtonPress(view: View) {
+        view.animate()
+            .scaleX(0.95f)
+            .scaleY(0.95f)
+            .setDuration(100)
+            .withEndAction {
+                view.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(100)
+                    .start()
+            }
+            .start()
+    }
+    
+    private fun animateCard(card: View, startDelay: Long) {
+        card.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(600)
+            .setStartDelay(startDelay)
+            .setInterpolator(android.view.animation.DecelerateInterpolator())
+            .start()
+    }
 
     private fun setupWindowInsets() {
         val adView = findViewById<com.google.android.gms.ads.AdView>(R.id.adView)
         
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(adView) { view, insets ->
             val systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-            val layoutParams = view.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
+            val layoutParams = view.layoutParams as android.widget.FrameLayout.LayoutParams
             layoutParams.bottomMargin = systemBars.bottom + resources.getDimensionPixelSize(R.dimen.spacing_md)
             view.layoutParams = layoutParams
             insets
