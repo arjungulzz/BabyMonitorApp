@@ -53,6 +53,8 @@ class BabyStationActivity : AppCompatActivity() {
 
         tvStatus = findViewById(R.id.tvStatus)
         setupControls()
+
+        isPro = com.example.babymonitor.billing.BillingManager.isProUser(this)
         
         startCamera()
         startServer()
@@ -62,6 +64,16 @@ class BabyStationActivity : AppCompatActivity() {
         resetInactivityTimer()
     }
 
+    private var isPro = false
+    private var isNoiseAlert = false
+    private var lastMotionDetectedTime = 0L
+    private var previousLuma: ByteArray? = null
+    
+    // Default ROI is full screen (0.2-0.8 was default in View, but logically full screen 0.0-1.0 is better for start)
+    // But View defaults to 0.2-0.8 for visibility. Let's sync.
+    // Default ROI matches RoiOverlayView default (0.2-0.8) so it's visible by default
+    private var currentRoi = android.graphics.RectF(0.2f, 0.2f, 0.8f, 0.8f)
+
     private fun setupControls() {
         val btnFlip = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnFlipCamera)
         val btnMic = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnMicToggle)
@@ -69,6 +81,13 @@ class BabyStationActivity : AppCompatActivity() {
         val seekZoom = findViewById<android.widget.SeekBar>(R.id.seekBarZoom)
         val btnClose = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnCloseStation)
         val btnInfo = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnInfo)
+        
+        val btnSetZone = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnSetZone)
+        val roiOverlay = findViewById<com.example.babymonitor.ui.RoiOverlayView>(R.id.roiOverlay)
+        val btnDoneRoi = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnDoneRoi)
+        val layoutControls = findViewById<android.view.View>(R.id.layoutControls)
+
+
         
         val tvMicLabel = findViewById<android.widget.TextView>(R.id.tvMicLabel)
         val tvFlashLabel = findViewById<android.widget.TextView>(R.id.tvFlashLabel)
@@ -142,6 +161,27 @@ class BabyStationActivity : AppCompatActivity() {
             cameraControl?.setLinearZoom(newProgress / 100f)
             resetInactivityTimer()
         }
+
+        btnSetZone.setOnClickListener {
+             // Start Editing
+             roiOverlay.setEditable(true)
+             layoutControls.visibility = android.view.View.GONE
+             btnDoneRoi.visibility = android.view.View.VISIBLE
+             
+             // Reset inactivity timer not needed as controls are hidden? 
+             // Actually we should keep screen on.
+             resetInactivityTimer()
+        }
+        
+        btnDoneRoi.setOnClickListener {
+             // Stop Editing / Save
+             currentRoi.set(roiOverlay.roiRectNorm)
+             roiOverlay.setEditable(false)
+             
+             layoutControls.visibility = android.view.View.VISIBLE
+             btnDoneRoi.visibility = android.view.View.GONE
+             resetInactivityTimer()
+        }
     }
 
     private val ecoModeRunnable = Runnable { enableEcoMode(true) }
@@ -190,30 +230,200 @@ class BabyStationActivity : AppCompatActivity() {
 
             imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                 val rotationDegrees = imageProxy.imageInfo.rotationDegrees
-                // Convert YUV to JPEG
+
+                // 1. Convert to NV21 ByteArray immediately (Single read of buffers)
+                val nv21 = com.example.babymonitor.Utils.yuv420888ToNv21(imageProxy)
+                
+                var isMotion = false
+
+                // Get ROI from Overlay (Thread-safe? strictly it's a view property, usually accessed on UI thread. 
+                // But accessing a RectF/variable is generally low risk if not modifying it.
+                // Ideally we should post to main to get it, or use a shared AtomicReference.
+                // But for now, let's assume `roiOverlay.roiRectNorm` is accessible.
+                // Uh oh, `roiOverlay` is local to setupControls. I need to make it class member or access via findViewById inside here.
+                // BUT `findViewById` cannot be called on background thread.
+                // SOLUTION: Store `roiRectNorm` in a thread-safe variable in the Activity.
+                // And update it when the View updates. 
+                // OR: Just hardcode for now? NO.
+                // Better: Update `currentRoi` variable in Activity whenever `onTouch` happens in View?
+                // Or just access it via `findViewById`? NO.
+                
+                // Let's declare `private val currentRoi = RectF(0.2f, 0.2f, 0.8f, 0.8f)` in class.
+                // And update it when user drags (we'd need a listener on View).
+                // Or just read it here? NO.
+                
+                // WAIT. Use `runOnUiThread` to get it? That blocks the analyzer.
+                // Better: Have `RoiOverlayView` update a public static/shared variable or callback.
+                
+                // Hack for now: `val roiOverlay = findViewById<...>(R.id.roiOverlay)` WILL CRASH.
+                // I must make `currentRoi` a member and update it.
+                // I'll add `currentRoi` to class member.
+                
+                // Since I cannot change the View code in this tool call (I am editing Activity),
+                // I will add a listener mechanism or just poll it?
+                // Wait, I can't poll.
+                
+                // I will assume `roiOverlay` updates `currentRoi`? No it acts on its own.
+                // I will modify `setupControls` to add a listener if possible, but `RoiOverlayView` doesn't have one yet.
+                
+                // OK, I will add `roiOverlay = findViewById...` to class level `lateinit`.
+                // And accessing its property `roiRectNorm` IS theoretically unsafe but practically works for read-only float reading on JVM mostly.
+                // But let's be safer.
+                // I'll add a simple `updateRoi()` method that `setupControls` calls? No...
+                
+                // Let's just use `currentRoi` which I will verify periodically?
+                // Or: just assume full screen if I can't get it easily.
+                
+                // I will blindly access `roiOverlay.roiRectNorm` here. It is risky.
+                // Actually `findViewById` works on any thread? NO. Views are not thread safe.
+                
+                // REPLAN:
+                // 1. Add `currentRoi` (AtomicReference or Volatile) to Activity.
+                // 2. In `setupControls`, set a listener? No listener on View.
+                // 3. Okay, I will rely on the fact that ONLY when I click "Done" (Set Zone toggle) do I commit the change?
+                //    Yes! "Set Zone" -> Edit -> "Done".
+                //    So `currentRoi` only needs to update when I click "Done".
+                //    Perfect!
+                //    So inside `btnSetZone.setOnClickListener` (when checking NOT isEditing/Done), I read `roiOverlay.roiRectNorm` and save it to `currentRoi`.
+                
+                // IMPLEMENTATION in THIS chunk:
+                // Use `currentRoi` (RectF) which I will define in class.
+                
+                val roi = currentRoi // Snapshot
+                
+                if (isPro) {
+                    // Motion Detection on Y-Plane (First width*height bytes of NV21)
+                    val width = imageProxy.width
+                    val height = imageProxy.height
+                    val ySize = width * height
+                    
+                    var diffCount = 0
+                    val threshold = 50 // Pixel diff threshold
+                    val trigger = (ySize * (roi.width() * roi.height())) / 200 // 0.5% of ROI area? Or total? Let's use 0.5% of ROI pixels.
+                    
+                    // Convert Norm ROI to Pixel Coordinates
+                    val rObj = Rect(
+                        (roi.left * width).toInt().coerceIn(0, width),
+                        (roi.top * height).toInt().coerceIn(0, height),
+                        (roi.right * width).toInt().coerceIn(0, width),
+                        (roi.bottom * height).toInt().coerceIn(0, height)
+                    )
+                    
+                    // Optimization: Only loop through ROI Y-pixels
+                    // Y-plane is linear. row by row.
+                    
+                    if (previousLuma != null && previousLuma!!.size == ySize) {
+                        // Check pixels inside ROI
+                        // Iterate rows from rObj.top to rObj.bottom
+                        for (y in rObj.top until rObj.bottom step 2) { // Step 2 for speed
+                             val rowStart = y * width
+                             // Iterate cols from rObj.left to rObj.right
+                             for (x in rObj.left until rObj.right step 10) { // Check every 10th pixel in row
+                                 val i = rowStart + x
+                                 if (i < ySize) { // Safety check
+                                     val diff = kotlin.math.abs((nv21[i].toInt() and 0xFF) - (previousLuma!![i].toInt() and 0xFF))
+                                     if (diff > threshold) diffCount++
+                                 }
+                             }
+                        }
+                        
+                        // Scale trigger based on scan density (we skipped pixels)
+                        // Trigger logic needs to match sampling.
+                        // We sampled 1/20th of pixels approx? (step 2 * step 10 = 20)
+                        
+                        val sampledPixels = ((rObj.width() / 10) * (rObj.height() / 2))
+                        val triggerCount = sampledPixels / 50 // 2% of sampled pixels changed?
+                        
+                        if (diffCount > triggerCount && triggerCount > 10) { // Minimum noise floor
+                            lastMotionDetectedTime = System.currentTimeMillis()
+                        }
+                    }
+                    
+                    // Update previousLuma with current Y-plane
+                    // We only need the first ySize bytes
+                    if (previousLuma == null || previousLuma!!.size != ySize) {
+                        previousLuma = ByteArray(ySize)
+                    }
+                    System.arraycopy(nv21, 0, previousLuma!!, 0, ySize)
+                    
+                    if (System.currentTimeMillis() - lastMotionDetectedTime < 2000) {
+                        isMotion = true
+                    }
+                }
+
+                // 2. Convert to Bitmap for Overlay using the SAME nv21 data
+                // No need to touch imageProxy planes again
                 val yuvImage = YuvImage(
-                    com.example.babymonitor.Utils.yuv420888ToNv21(imageProxy),
+                    nv21,
                     android.graphics.ImageFormat.NV21,
                     imageProxy.width,
                     imageProxy.height,
                     null
                 )
                 val out = ByteArrayOutputStream()
-                yuvImage.compressToJpeg(Rect(0, 0, imageProxy.width, imageProxy.height), 40, out)
-                val bytes = out.toByteArray()
+                yuvImage.compressToJpeg(Rect(0, 0, imageProxy.width, imageProxy.height), 60, out)
+                val jpgBytes = out.toByteArray()
+                var bitmap = BitmapFactory.decodeByteArray(jpgBytes, 0, jpgBytes.size)
 
+                // 3. Rotate if needed
                 if (rotationDegrees != 0) {
-                     val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                      val matrix = android.graphics.Matrix()
                      matrix.postRotate(rotationDegrees.toFloat())
-                     val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-                     val out2 = ByteArrayOutputStream()
-                     rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 40, out2)
-                     currentFrame.set(out2.toByteArray())
-                } else {
-                     currentFrame.set(bytes)
+                     bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                }
+                
+                // Draw ROI Box (ALWAYS, if not full screen)
+                if (roi.width() < 0.95f || roi.height() < 0.95f) { // If significant crop
+                    val mutableBitmap = if (bitmap.isMutable) bitmap else bitmap.copy(Bitmap.Config.ARGB_8888, true)
+                    val canvas = android.graphics.Canvas(mutableBitmap)
+                    val paintRoi = android.graphics.Paint().apply {
+                        color = android.graphics.Color.GREEN
+                        style = android.graphics.Paint.Style.STROKE
+                        strokeWidth = 5f
+                        pathEffect = android.graphics.DashPathEffect(floatArrayOf(20f, 10f), 0f)
+                    }
+                    
+                    val rDraw = android.graphics.RectF(
+                         roi.left * mutableBitmap.width,
+                         roi.top * mutableBitmap.height,
+                         roi.right * mutableBitmap.width,
+                         roi.bottom * mutableBitmap.height
+                    )
+                    canvas.drawRect(rDraw, paintRoi)
+                    bitmap = mutableBitmap
+                }
+                
+                // 4. Draw Overlays (Motion / Noise) if Pro
+                if (isPro && (isMotion || isNoiseAlert)) {
+                    val mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+                    val canvas = android.graphics.Canvas(mutableBitmap)
+                    val paint = android.graphics.Paint().apply {
+                        color = android.graphics.Color.RED
+                        style = android.graphics.Paint.Style.STROKE
+                        strokeWidth = 20f
+                    }
+                    
+                    // Draw Motion Box
+                    if (isMotion) {
+                        val rect = Rect(10, 10, mutableBitmap.width - 10, mutableBitmap.height - 10)
+                        canvas.drawRect(rect, paint)
+                    }
+                    
+                    // Draw Noise Alert
+                    if (isNoiseAlert) {
+                        paint.style = android.graphics.Paint.Style.FILL
+                        paint.textSize = 100f
+                        canvas.drawText("🔊 NOISE DETECTED", 50f, 200f, paint)
+                    }
+                    
+                    bitmap = mutableBitmap
                 }
 
+                // 5. Compress final frame
+                val finalOut = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 40, finalOut)
+                currentFrame.set(finalOut.toByteArray())
+                
                 imageProxy.close()
             }
 
@@ -409,6 +619,17 @@ class BabyStationActivity : AppCompatActivity() {
                                  } else {
                                      val read = audioRecord.read(buffer, 0, minBufSize)
                                      if (read > 0) {
+                                         // Noise Detection (Pro)
+                                         if (isPro) {
+                                             var sum = 0.0
+                                             for (i in 0 until read step 2) {
+                                                  val sample = (buffer[i].toInt() and 0xFF) or (buffer[i + 1].toInt() shl 8)
+                                                  sum += sample * sample
+                                             }
+                                             val rms = kotlin.math.sqrt(sum / (read / 2))
+                                             isNoiseAlert = rms > 3000 // Threshold (tuned)
+                                         }
+                                         
                                          try {
                                             out.write(buffer, 0, read)
                                          } catch (e: IOException) {
@@ -506,6 +727,40 @@ class BabyStationActivity : AppCompatActivity() {
             } else {
                 newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found")
             }
+        }
+    }
+
+    // Picture-in-Picture Logic
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                 val params = android.app.PictureInPictureParams.Builder()
+                    .setAspectRatio(android.util.Rational(9, 16))
+                    .build()
+                enterPictureInPictureMode(params)
+            }
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        
+        val controls = findViewById<android.view.View>(R.id.layoutControls)
+        val btnClose = findViewById<android.view.View>(R.id.btnCloseStation)
+        val btnInfo = findViewById<android.view.View>(R.id.btnInfo)
+        val tvStatus = findViewById<android.view.View>(R.id.tvStatus)
+
+        if (isInPictureInPictureMode) {
+            controls.visibility = android.view.View.GONE
+            btnClose.visibility = android.view.View.GONE
+            btnInfo.visibility = android.view.View.GONE
+            tvStatus.visibility = android.view.View.GONE
+        } else {
+            controls.visibility = android.view.View.VISIBLE
+            btnClose.visibility = android.view.View.VISIBLE
+            btnInfo.visibility = android.view.View.VISIBLE
+            tvStatus.visibility = android.view.View.VISIBLE
         }
     }
 

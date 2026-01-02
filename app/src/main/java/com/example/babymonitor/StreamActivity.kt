@@ -157,4 +157,30 @@ class StreamActivity : AppCompatActivity() {
         audioThread?.interrupt()
         audioThread = null
     }
+    // Picture-in-Picture Logic
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                val params = android.app.PictureInPictureParams.Builder()
+                    .setAspectRatio(android.util.Rational(9, 16)) // Portrait aspect ratio
+                    .build()
+                enterPictureInPictureMode(params)
+            }
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        val btnBack = findViewById<android.view.View>(R.id.btnBack)
+        val btnDisconnect = findViewById<android.view.View>(R.id.btnDisconnect)
+        
+        if (isInPictureInPictureMode) {
+            btnBack.visibility = android.view.View.GONE
+            btnDisconnect.visibility = android.view.View.GONE
+        } else {
+            btnBack.visibility = android.view.View.VISIBLE
+            btnDisconnect.visibility = android.view.View.VISIBLE
+        }
+    }
 }

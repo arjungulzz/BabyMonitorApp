@@ -9,6 +9,17 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
     <uses-feature android:name="android.hardware.camera.any" />
     <application
         android:allowBackup="true"
@@ -28,8 +39,10 @@
 
         <activity
             android:name=".BabyStationActivity"
+            android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize"
             android:exported="false"
             android:screenOrientation="portrait"
+            android:supportsPictureInPicture="true"
             android:theme="@style/Theme.BabyMonitor" />
 
         <activity
@@ -40,8 +53,10 @@
 
         <activity
             android:name=".StreamActivity"
+            android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize"
             android:exported="false"
             android:screenOrientation="portrait"
+            android:supportsPictureInPicture="true"
             android:theme="@style/Theme.BabyMonitor" />
 
         <activity

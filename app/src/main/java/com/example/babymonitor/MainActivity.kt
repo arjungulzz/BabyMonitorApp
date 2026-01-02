@@ -64,19 +64,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupMonetization() {
-        val cardGoPro = findViewById<View>(R.id.cardGoPro)
+        val cardGoPro = findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardGoPro)
         val adView = findViewById<com.google.android.gms.ads.AdView>(R.id.adView)
+
+        // Access inner views dynamically since they don't have unique IDs
+        val layout = cardGoPro.getChildAt(0) as android.widget.LinearLayout
+        val tvGoPro = layout.getChildAt(1) as android.widget.TextView
+        val imgGoPro = layout.getChildAt(0) as android.widget.ImageView
 
         if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
             // Pro Mode
-            cardGoPro.visibility = View.GONE
-            adView.visibility = View.GONE
+            adView.visibility = android.view.View.GONE
+            
+            // Show Pro Badge
+            cardGoPro.visibility = android.view.View.VISIBLE
+            cardGoPro.strokeColor = android.graphics.Color.parseColor("#FFD700") // Gold
+            cardGoPro.setCardBackgroundColor(android.graphics.Color.parseColor("#10FFD700")) // Subtle Gold Tint
+            
+            tvGoPro.text = "Pro\nMember"
+            tvGoPro.setTextColor(android.graphics.Color.parseColor("#FFD700"))
+            
+            cardGoPro.setOnClickListener {
+                android.widget.Toast.makeText(this, "You are a Pro Member! \uD83D\uDC51", android.widget.Toast.LENGTH_SHORT).show()
+            }
         } else {
             // Free Mode
-            cardGoPro.visibility = View.VISIBLE
-            adView.visibility = View.VISIBLE
+            adView.visibility = android.view.View.VISIBLE
             val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
             adView.loadAd(adRequest)
+
+            cardGoPro.visibility = android.view.View.VISIBLE
+            cardGoPro.setCardBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.surface_white))
+            tvGoPro.text = "Go Pro\nPlan"
+             // Reset text color
+             tvGoPro.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
 
             cardGoPro.setOnClickListener {
                 showProPurchaseDialog()

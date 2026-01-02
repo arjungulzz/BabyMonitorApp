@@ -6,7 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_light"
-    android:padding="24dp"
     tools:context=".MainActivity">
 
     <LinearLayout
@@ -174,74 +173,86 @@
     </LinearLayout>
 
     <!-- Support Options -->
+    <!-- Support Options -->
     <LinearLayout
+        android:id="@+id/supportContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/cardsContainer"
         android:paddingHorizontal="24dp"
         android:layout_marginTop="24dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFeedback"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="0dp"
+        <!-- Row 1: Actions -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Feedback"
-            android:textSize="11sp"
-            android:textColor="@color/text_secondary"
-            app:icon="@drawable/ic_feedback"
-            app:iconTint="@color/text_secondary"
-            app:iconGravity="textTop"
-            android:ems="1"
-            android:gravity="center"/>
+            android:orientation="horizontal"
+            android:gravity="center">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnReport"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Report"
-            android:textSize="11sp"
-            android:textColor="@color/text_secondary"
-            app:icon="@drawable/ic_report"
-            app:iconTint="@color/text_secondary"
-            app:iconGravity="textTop"
-            android:ems="1"
-            android:gravity="center"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFeedback"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Feedback"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary"
+                app:icon="@drawable/ic_feedback"
+                app:iconTint="@color/text_secondary"
+                app:iconGravity="textTop"
+                android:ems="1"
+                android:gravity="center"/>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReport"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Report"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary"
+                app:icon="@drawable/ic_report"
+                app:iconTint="@color/text_secondary"
+                app:iconGravity="textTop"
+                android:ems="1"
+                android:gravity="center"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAbout"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="About"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary"
+                app:icon="@drawable/ic_info"
+                app:iconTint="@color/text_secondary"
+                app:iconGravity="textTop"
+                android:ems="1"
+                android:gravity="center"/>
+        </LinearLayout>
+
+        <!-- Row 2: Coffee -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSupport"
             style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Buy Coffee"
-            android:textSize="11sp"
+            android:layout_marginTop="8dp"
+            android:text="Buy me a Coffee"
+            android:textAllCaps="false"
+            android:textSize="14sp"
             android:textColor="@color/text_secondary"
             app:icon="@drawable/ic_coffee"
             app:iconTint="@color/text_secondary"
-            app:iconGravity="textTop"
-            android:ems="1"
+            app:iconGravity="textStart"
             android:gravity="center"/>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAbout"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="About"
-            android:textSize="11sp"
-            android:textColor="@color/text_secondary"
-            app:icon="@drawable/ic_info"
-            app:iconTint="@color/text_secondary"
-            app:iconGravity="textTop"
-            android:ems="1"
-            android:gravity="center"/>
     </LinearLayout>
 
     <!-- AdView -->

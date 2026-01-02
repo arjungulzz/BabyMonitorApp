@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Modern Pastel Palette (Night) -->
+    <!-- Keep brand colors but maybe slightly desaturated for night comfort if needed, or keep same for brand identity -->
+    <color name="primary_pastel_blue">#AEC6CF</color> 
+    <color name="primary_dark_blue">#779ECB</color>
+    <color name="secondary_pastel_pink">#FFB7B2</color>
+    <color name="secondary_dark_pink">#FF6961</color>
+    
+    <!-- Backgrounds: Dark Grey/Black -->
+    <color name="background_light">#121212</color> <!-- Reusing name 'background_light' but giving it dark value for night resource -->
+    <color name="surface_white">#1E1E1E</color>  <!-- Reusing name 'surface_white' -> Dark Surface -->
+    
+    <!-- Text: Light/White -->
+    <color name="text_primary">#E0E0E0</color>
+    <color name="text_secondary">#B0B0B0</color>
+    
+    <color name="success_green">#77DD77</color>
+    <color name="error_red">#FF6961</color>
+    <color name="accent_pastel_blue">#89CFF0</color>
+
+    <!-- Legacy mapped -->
+    <color name="purple_200">@color/primary_pastel_blue</color>
+    <color name="purple_500">@color/primary_dark_blue</color>
+    <color name="purple_700">@color/primary_dark_blue</color>
+    <color name="teal_200">@color/secondary_pastel_pink</color>
+    <color name="teal_700">@color/secondary_dark_pink</color>
+    <color name="black">@color/text_primary</color> 
+    <color name="white">@color/surface_white</color>
+</resources>
