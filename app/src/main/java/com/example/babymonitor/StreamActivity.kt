@@ -42,8 +42,6 @@ class StreamActivity : AppCompatActivity() {
                 finish()
             }
         })
-    }
-
 
         btnBack.setOnClickListener {
             cancelServiceAndBroadcast()
