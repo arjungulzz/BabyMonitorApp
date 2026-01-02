@@ -48,12 +48,46 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupMonetization()
+        checkCrashReport()
+    }
+
+    private fun checkCrashReport() {
+        val file = java.io.File(getExternalFilesDir(null), "crash_log.txt")
+        if (file.exists()) {
+            val logContent = file.readText()
+            
+            // Clear the file so we don't prompt again
+            file.delete()
+            
+            android.app.AlertDialog.Builder(this)
+                .setTitle("App Recovered from Crash")
+                .setMessage("The app encountered an error and restarted. Would you like to send the crash report to the developer to help fix it?")
+                .setPositiveButton("Send Report") { _, _ ->
+                    sendCrashReport(logContent)
+                }
+                .setNegativeButton("Ignore", null)
+                .show()
+        }
+    }
+
+    private fun sendCrashReport(log: String) {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = android.net.Uri.parse("mailto:")
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("arjungulyani@gmail.com")) // Developer email
+            putExtra(Intent.EXTRA_SUBJECT, "Crash Report: Baby Monitor App")
+            putExtra(Intent.EXTRA_TEXT, "Device Info:\nModel: ${android.os.Build.MODEL}\nAndroid: ${android.os.Build.VERSION.RELEASE}\n\nStack Trace:\n$log")
+        }
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "No email client found.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun sendEmail(subject: String) {
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = android.net.Uri.parse("mailto:") // only email apps should handle this
-            putExtra(Intent.EXTRA_EMAIL, arrayOf("developer@example.com")) // Placeholder
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("arjungulyani@gmail.com")) 
             putExtra(Intent.EXTRA_SUBJECT, subject)
         }
         try {
