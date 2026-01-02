@@ -38,8 +38,10 @@ class MainActivity : AppCompatActivity() {
             registerReceiver(uiUpdateReceiver, filter)
         }
 
-        // Initialize Ads
-        com.google.android.gms.ads.MobileAds.initialize(this) {}
+        // Initialize Ads on background thread to avoid blocking UI
+        Thread {
+            com.google.android.gms.ads.MobileAds.initialize(this) {}
+        }.start()
 
         findViewById<View>(R.id.btnFeedback).setOnClickListener {
             animateButtonPress(it)
@@ -72,7 +74,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupMonetization()
-        setupEnterAnimations()
+        
+        // Delay animations slightly to let layout settle and reduce startup jank
+        window.decorView.postDelayed({
+            setupEnterAnimations()
+        }, 100)
+        
         checkCrashReport()
     }
     
@@ -200,10 +207,14 @@ class MainActivity : AppCompatActivity() {
                 android.widget.Toast.makeText(this, "You are a Pro Member! 👑", android.widget.Toast.LENGTH_SHORT).show()
             }
         } else {
-            // Free Mode
+            // Free Mode - Load ads after a short delay to avoid blocking UI
             adView.visibility = android.view.View.VISIBLE
-            val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
-            adView.loadAd(adRequest)
+            
+            // Delay ad loading to avoid blocking initial render
+            adView.postDelayed({
+                val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
+                adView.loadAd(adRequest)
+            }, 200)
 
             // Default Pro Banner text (already set in XML)
             cardGoPro.setOnClickListener {
