@@ -338,12 +338,9 @@ class MainActivity : AppCompatActivity() {
         
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(adView) { view, insets ->
             val systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-            view.setPadding(
-                view.paddingLeft,
-                view.paddingTop,
-                view.paddingRight,
-                systemBars.bottom
-            )
+            val layoutParams = view.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
+            layoutParams.bottomMargin = systemBars.bottom + resources.getDimensionPixelSize(R.dimen.spacing_md)
+            view.layoutParams = layoutParams
             insets
         }
     }
