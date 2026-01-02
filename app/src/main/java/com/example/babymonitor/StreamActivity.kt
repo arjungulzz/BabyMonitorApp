@@ -70,7 +70,7 @@ class StreamActivity : AppCompatActivity() {
         val html = """
             <html>
                 <body style="margin:0;padding:0;overflow:hidden;background:black;">
-                    <img src="$url" style="width:100%;height:100%;object-fit:cover;" />
+                    <img src="$url" style="width:100%;height:100%;object-fit:fill;" />
                 </body>
             </html>
         """.trimIndent()
@@ -106,6 +106,7 @@ class StreamActivity : AppCompatActivity() {
             try {
                 // Connect to Audio Server
                 socket = java.net.Socket(ip, 8081)
+                socket.tcpNoDelay = true // Disable Nagle's algorithm for lower latency
                 val inputStream = socket.getInputStream()
 
                 val sampleRate = 44100
@@ -160,13 +161,11 @@ class StreamActivity : AppCompatActivity() {
     // Picture-in-Picture Logic
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                val params = android.app.PictureInPictureParams.Builder()
-                    .setAspectRatio(android.util.Rational(9, 16)) // Portrait aspect ratio
-                    .build()
-                enterPictureInPictureMode(params)
-            }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val params = android.app.PictureInPictureParams.Builder()
+                .setAspectRatio(android.util.Rational(9, 16)) // Portrait aspect ratio
+                .build()
+            enterPictureInPictureMode(params)
         }
     }
 

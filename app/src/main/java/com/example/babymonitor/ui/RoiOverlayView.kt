@@ -28,7 +28,10 @@ class RoiOverlayView @JvmOverloads constructor(
     }
     
     // The normalized ROI rect (0.0 to 1.0)
-    var roiRectNorm = RectF(0.2f, 0.2f, 0.8f, 0.8f) 
+    var roiRectNorm = RectF(0.4f, 0.4f, 0.6f, 0.6f) // Small center square
+    
+    // Callback for ROI changes (real-time)
+    var onRoiChanged: ((RectF) -> Unit)? = null
     
     // The actual drawing rect in view coordinates
     private val roiRect = RectF()
@@ -36,6 +39,9 @@ class RoiOverlayView @JvmOverloads constructor(
     private var isEditable = false
     private var activeCorner = -1 // -1: None, 0: TopLeft, 1: TopRight, 2: BotRight, 3: BotLeft, 4: Center
     private val cornerSize = 40f
+    
+    private var lastX = 0f
+    private var lastY = 0f
 
     fun setEditable(editable: Boolean) {
         isEditable = editable
@@ -66,10 +72,7 @@ class RoiOverlayView @JvmOverloads constructor(
     }
 
     override fun onDraw(canvas: Canvas) {
-        // Always draw the overlay to indicate active zone
-        // if (!isEditable && roiRectNorm.width() >= 0.95f && roiRectNorm.height() >= 0.95f) {
-        //    return
-        // }
+        if (!isEditable) return // Hidden by default
 
         // Draw darkened background outside ROI
         // Top
@@ -84,13 +87,11 @@ class RoiOverlayView @JvmOverloads constructor(
         // Draw Border
         canvas.drawRect(roiRect, paintBorder)
 
-        // Draw Handles if Editable
-        if (isEditable) {
-            canvas.drawCircle(roiRect.left, roiRect.top, cornerSize, paintCorner)
-            canvas.drawCircle(roiRect.right, roiRect.top, cornerSize, paintCorner)
-            canvas.drawCircle(roiRect.right, roiRect.bottom, cornerSize, paintCorner)
-            canvas.drawCircle(roiRect.left, roiRect.bottom, cornerSize, paintCorner)
-        }
+        // Draw Handles
+        canvas.drawCircle(roiRect.left, roiRect.top, cornerSize, paintCorner)
+        canvas.drawCircle(roiRect.right, roiRect.top, cornerSize, paintCorner)
+        canvas.drawCircle(roiRect.right, roiRect.bottom, cornerSize, paintCorner)
+        canvas.drawCircle(roiRect.left, roiRect.bottom, cornerSize, paintCorner)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -121,31 +122,27 @@ class RoiOverlayView @JvmOverloads constructor(
                             roiRect.bottom = event.y.coerceIn(roiRect.top + 100, height.toFloat())
                         }
                         4 -> { // Center (Move)
-                            val w = roiRect.width()
-                            val h = roiRect.height()
-                            val curCX = roiRect.centerX()
-                            val curCY = roiRect.centerY()
-                            val dx = event.x - curCX
-                            val dy = event.y - curCY
+                            val dx = event.x - lastX
+                            val dy = event.y - lastY
+                            roiRect.offset(dx, dy)
                             
-                            var newLeft = roiRect.left + dx
-                            var newTop = roiRect.top + dy
-                            
-                            // Bounds Check
-                            if (newLeft < 0) newLeft = 0f
-                            if (newTop < 0) newTop = 0f
-                            if (newLeft + w > width) newLeft = width.toFloat() - w
-                            if (newTop + h > height) newTop = height.toFloat() - h
-
-                            roiRect.set(newLeft, newTop, newLeft + w, newTop + h)
+                            // Clamp to screen
+                            if (roiRect.left < 0) roiRect.offset(-roiRect.left, 0f)
+                            if (roiRect.top < 0) roiRect.offset(0f, -roiRect.top)
+                            if (roiRect.right > width) roiRect.offset(width - roiRect.right, 0f)
+                            if (roiRect.bottom > height) roiRect.offset(0f, height - roiRect.bottom)
                         }
                     }
                     updateNormFromRect()
+                    onRoiChanged?.invoke(roiRectNorm)
                     invalidate()
                 }
+                lastX = event.x
+                lastY = event.y
             }
             MotionEvent.ACTION_UP -> {
                 activeCorner = -1
+                onRoiChanged?.invoke(roiRectNorm) // Invoke callback on ACTION_UP as well
             }
         }
         return true
@@ -153,6 +150,7 @@ class RoiOverlayView @JvmOverloads constructor(
 
     private fun getActiveCorner(x: Float, y: Float): Int {
         val touchSize = cornerSize * 2.5f
+        
         // Check corners
         if (dist(x, y, roiRect.left, roiRect.top) < touchSize) return 0
         if (dist(x, y, roiRect.right, roiRect.top) < touchSize) return 1
