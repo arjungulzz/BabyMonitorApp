@@ -40,10 +40,8 @@
 
         <activity
             android:name=".BabyStationActivity"
-            android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize"
             android:exported="false"
             android:screenOrientation="fullSensor"
-            android:supportsPictureInPicture="true"
             android:theme="@style/Theme.BabyMonitor" />
 
         <activity
@@ -54,10 +52,8 @@
 
         <activity
             android:name=".StreamActivity"
-            android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:supportsPictureInPicture="true"
             android:theme="@style/Theme.BabyMonitor" />
 
         <activity
