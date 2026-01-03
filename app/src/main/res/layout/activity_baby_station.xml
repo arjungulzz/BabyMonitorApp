@@ -294,7 +294,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_toast_dark"
-        android:text="Dimming screen in 5 seconds..."
+        android:text="Dimming screen in 5 seconds...\nTap anywhere to wake"
         android:textColor="@android:color/white"
         android:textSize="14sp"
         android:letterSpacing="0.02"

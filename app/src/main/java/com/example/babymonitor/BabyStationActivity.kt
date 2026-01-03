@@ -265,7 +265,7 @@ class BabyStationActivity : AppCompatActivity() {
                     tvEco.visibility = android.view.View.VISIBLE
                     tvEco.animate().alpha(1f).setDuration(200).start()
                 }
-                tvEco.text = "Dimming screen in $ecoCountdown seconds to save power. Tap anywhere to wake"
+                tvEco.text = "Dimming screen in $ecoCountdown seconds...\nTap anywhere to wake"
                 
                 ecoCountdown--
                 handler.postDelayed(this, 1000)
@@ -302,16 +302,21 @@ class BabyStationActivity : AppCompatActivity() {
     private fun enableEcoMode(enable: Boolean) {
         val overlay = findViewById<android.view.View>(R.id.overlayEcoMode)
         val controls = findViewById<android.view.View>(R.id.layoutControls)
+        val sidebar = findViewById<android.view.View>(R.id.proSidebar)
         val layoutParams = window.attributes
 
         if (enable) {
             overlay.visibility = android.view.View.VISIBLE
             controls.visibility = android.view.View.GONE
+            if (sidebar != null) sidebar.visibility = android.view.View.GONE
+            
             // Set brightness to minimum
             layoutParams.screenBrightness = 0.01f // 1% brightness
         } else {
             overlay.visibility = android.view.View.GONE
             controls.visibility = android.view.View.VISIBLE
+            if (sidebar != null) sidebar.visibility = android.view.View.VISIBLE
+            
             // Restore brightness to system default
             layoutParams.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
         }
