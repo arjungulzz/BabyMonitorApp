@@ -860,22 +860,6 @@ class BabyStationActivity : AppCompatActivity() {
         val tvMotionLabel = findViewById<android.widget.TextView>(R.id.tvMotionLabel)
         val tvNoiseLabel = findViewById<android.widget.TextView>(R.id.tvNoiseLabel)
         
-        // Update Noise UI based on current state
-        if (isPro) {
-            val btnNoise = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProNoise)
-            btnNoise.setImageResource(if (isNoiseAlertsEnabled) R.drawable.ic_volume_up else R.drawable.ic_volume_off)
-            tvNoiseLabel.text = if (isNoiseAlertsEnabled) "Noise\nAlerts: ON" else "Noise\nAlerts: OFF"
-            
-            // Update color to indicate active state
-            if (isNoiseAlertsEnabled) {
-                 btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
-                 tvNoiseLabel.setTextColor(android.graphics.Color.WHITE)
-            } else {
-                 btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
-                 tvNoiseLabel.setTextColor(android.graphics.Color.parseColor("#E6FFFFFF"))
-            }
-        }
-        
         if (!isPro) {
             // Add lock emoji to labels for free users
             tvSetZoneLabel.text = "Set Motion\nZone 🔒"
@@ -894,7 +878,9 @@ class BabyStationActivity : AppCompatActivity() {
             // Normal labels for Pro users
             tvSetZoneLabel.text = "Set Motion\nZone"
             tvMotionLabel.text = "Motion\nAlerts"
-            tvNoiseLabel.text = "Noise\nAlerts"
+            
+            // Initialize Noise UI state
+            updateNoiseAlertsUI()
             
             // Enable for Pro users
             btnSetZone.alpha = 1.0f
@@ -913,7 +899,7 @@ class BabyStationActivity : AppCompatActivity() {
     }
     
     private fun toggleMotionAlerts() {
-        android.widget.Toast.makeText(this, "Motion alerts toggled", android.widget.Toast.LENGTH_SHORT).show()
+        // android.widget.Toast.makeText(this, "Motion alerts toggled", android.widget.Toast.LENGTH_SHORT).show()
     }
     
     private fun toggleNoiseAlerts() {
@@ -932,9 +918,9 @@ class BabyStationActivity : AppCompatActivity() {
         updateNoiseAlertsUI()
         
         if (isNoiseAlertsEnabled) {
-             android.widget.Toast.makeText(this, "Noise Alerts Enabled", android.widget.Toast.LENGTH_SHORT).show()
+            // android.widget.Toast.makeText(this, "Noise Alerts Enabled", android.widget.Toast.LENGTH_SHORT).show()
         } else {
-             android.widget.Toast.makeText(this, "Noise Alerts Disabled", android.widget.Toast.LENGTH_SHORT).show()
+            // android.widget.Toast.makeText(this, "Noise Alerts Disabled", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
     
