@@ -105,9 +105,9 @@
         android:orientation="vertical"
         android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:paddingTop="20dp"
-        android:paddingBottom="24dp"
-        android:paddingHorizontal="24dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="16dp"
+        android:paddingHorizontal="16dp"
         android:background="@drawable/bg_control_panel">
 
         <!-- Zoom Controls -->
@@ -116,7 +116,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="12dp">
             
             <ImageView
                 android:id="@+id/btnZoomOut"
@@ -301,11 +301,12 @@
     <!-- Permanent Vertical Pro Sidebar (Right Side) -->
     <LinearLayout
         android:id="@+id/proSidebar"
-        android:layout_width="80dp"
-        android:layout_height="0dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/bg_pro_sidebar"
-        android:padding="8dp"
+        android:background="@drawable/bg_control_panel"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="12dp"
         android:gravity="center"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/layoutControls"
@@ -315,7 +316,6 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="60dp"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -326,7 +326,7 @@
                 app:srcCompat="@drawable/ic_crop"
                 app:tint="@color/text_primary"
                 app:backgroundTint="@color/surface_white"
-                app:fabSize="mini"
+                app:fabSize="normal"
                 app:elevation="4dp"
                 app:borderWidth="0dp"/>
 
@@ -356,7 +356,7 @@
                 app:srcCompat="@drawable/ic_motion"
                 app:tint="@color/text_primary"
                 app:backgroundTint="@color/surface_white"
-                app:fabSize="mini"
+                app:fabSize="normal"
                 app:elevation="4dp"
                 app:borderWidth="0dp"/>
 
@@ -386,7 +386,7 @@
                 app:srcCompat="@drawable/ic_volume_up"
                 app:tint="@color/text_primary"
                 app:backgroundTint="@color/surface_white"
-                app:fabSize="mini"
+                app:fabSize="normal"
                 app:elevation="4dp"
                 app:borderWidth="0dp"/>
 
