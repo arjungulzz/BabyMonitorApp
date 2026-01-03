@@ -36,7 +36,6 @@ class BabyStationActivity : AppCompatActivity() {
     private var registrationListener: NsdManager.RegistrationListener? = null
     private val currentFrame = AtomicReference<ByteArray>()
     private lateinit var tvStatus: android.widget.TextView
-    private lateinit var btnSetZone: com.google.android.material.floatingactionbutton.FloatingActionButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -125,7 +124,7 @@ class BabyStationActivity : AppCompatActivity() {
         val btnClose = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnCloseStation)
         val btnInfo = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnInfo)
         
-        btnSetZone = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnSetZone)
+        val btnSetZone = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnSetZone)
         val roiOverlay = findViewById<com.example.babymonitor.ui.RoiOverlayView>(R.id.roiOverlay)
         val layoutControls = findViewById<android.view.View>(R.id.layoutControls)
         val tvZoneLabel = findViewById<android.widget.TextView>(R.id.tvZoneLabel)
@@ -828,36 +827,6 @@ class BabyStationActivity : AppCompatActivity() {
                 newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found")
             }
         }
-    }
-
-    private fun setupZoneControls() {
-        val tvProBadge = findViewById<android.widget.TextView>(R.id.tvProBadge)
-        
-        if (!isPro) {
-            // Show PRO badge for free users
-            tvProBadge.visibility = android.view.View.VISIBLE
-            
-            // Dim the button slightly to indicate it's limited
-            btnSetZone.alpha = 0.7f
-        } else {
-            // Hide PRO badge for Pro users
-            tvProBadge.visibility = android.view.View.GONE
-            
-            // Full opacity for Pro users
-            btnSetZone.alpha = 1.0f
-        }
-    }
-    
-    private fun showPremiumPrompt(featureName: String) {
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Premium Feature")
-            .setMessage("$featureName is a premium feature. Upgrade to Pro to unlock zone configuration and other advanced features.")
-            .setPositiveButton("Upgrade") { _, _ ->
-                // User wants to upgrade - you can add navigation to billing here
-                android.widget.Toast.makeText(this, "Upgrade flow coming soon!", android.widget.Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
     }
 
     companion object {

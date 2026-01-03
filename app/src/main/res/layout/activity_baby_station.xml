@@ -179,6 +179,20 @@
                     app:borderWidth="0dp"/>
 
                 <TextView
+                    android:id="@+id/tvProBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_pro_badge"
+                    android:text="PRO"
+                    android:textColor="@android:color/white"
+                    android:textSize="10sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:visibility="gone" />
+
+                <TextView
                     android:id="@+id/tvZoneLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
