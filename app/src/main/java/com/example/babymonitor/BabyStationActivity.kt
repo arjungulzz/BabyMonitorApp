@@ -868,8 +868,8 @@ class BabyStationActivity : AppCompatActivity() {
             
             // Update color to indicate active state
             if (isNoiseAlertsEnabled) {
-                 btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.success_green))
-                 tvNoiseLabel.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.success_green))
+                 btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
+                 tvNoiseLabel.setTextColor(android.graphics.Color.WHITE)
             } else {
                  btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
                  tvNoiseLabel.setTextColor(android.graphics.Color.parseColor("#E6FFFFFF"))
@@ -946,8 +946,15 @@ class BabyStationActivity : AppCompatActivity() {
         tvNoiseLabel.text = if (isNoiseAlertsEnabled) "Noise\nAlerts: ON" else "Noise\nAlerts: OFF"
         
         if (isNoiseAlertsEnabled) {
-             btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.success_green))
-             tvNoiseLabel.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.success_green))
+             // Keep standard color but maybe brighter white? Or just primary text color.
+             // User said "remove green". So let's stick to simple contrast.
+             // We'll use white for ON to make it pop slightly more than gray if needed, or just keep uniform.
+             // Let's use White (#FFFFFF) for ON, and maybe slightly dimmed for OFF?
+             // Actually, existing logic for others is usually just icon change.
+             // Let's use standard text_primary (usually black/dark or white in dark mode).
+             // Since we are floating over camera, white is best.
+             btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
+             tvNoiseLabel.setTextColor(android.graphics.Color.WHITE)
         } else {
              btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
              tvNoiseLabel.setTextColor(android.graphics.Color.parseColor("#E6FFFFFF"))
