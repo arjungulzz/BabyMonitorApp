@@ -208,6 +208,35 @@ class BabyStationActivity : AppCompatActivity() {
         roiOverlay.onRoiChanged = { rect ->
             currentRoi.set(rect)
         }
+
+        // Apply Window Insets to avoid navigation bar overlap
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(layoutControls) { view, windowInsets ->
+            val insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            // Add bottom inset to existing/default bottom padding
+            // We use margin for floating effect, but padding for safe area?
+            // Actually, simpler to increase bottom margin
+            val params = view.layoutParams as android.view.ViewGroup.MarginLayoutParams
+            params.bottomMargin = insets.bottom + android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 8f, resources.displayMetrics
+            ).toInt()
+            view.layoutParams = params
+            windowInsets
+        }
+
+        // Apply Window Insets to top bar for status bar safety
+        val topBar = findViewById<android.view.View>(R.id.topBar)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(topBar) { view, windowInsets ->
+            val insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            view.setPadding(
+                view.paddingLeft,
+                insets.top + android.util.TypedValue.applyDimension(
+                    android.util.TypedValue.COMPLEX_UNIT_DIP, 12f, resources.displayMetrics
+                ).toInt(),
+                view.paddingRight,
+                view.paddingBottom
+            )
+            windowInsets
+        }
     }
 
     private val ecoModeRunnable = Runnable { enableEcoMode(true) }
@@ -819,23 +848,23 @@ class BabyStationActivity : AppCompatActivity() {
         
         if (!isPro) {
             // Add lock emoji to labels for free users
-            tvSetZoneLabel.text = "Set\nZone 🔒"
-            tvMotionLabel.text = "Motion 🔒"
-            tvNoiseLabel.text = "Noise 🔒"
+            tvSetZoneLabel.text = "Set Motion\nZone 🔒"
+            tvMotionLabel.text = "Motion\nAlerts 🔒"
+            tvNoiseLabel.text = "Noise\nAlerts 🔒"
             
             // Disable and dim for free users
             btnSetZone.alpha = 0.5f
             btnMotion.alpha = 0.5f
             btnNoise.alpha = 0.5f
             
-            btnSetZone.setOnClickListener { showPremiumPrompt("Set Zone") }
+            btnSetZone.setOnClickListener { showPremiumPrompt("Set Motion Zone") }
             btnMotion.setOnClickListener { showPremiumPrompt("Motion Alerts") }
             btnNoise.setOnClickListener { showPremiumPrompt("Noise Alerts") }
         } else {
             // Normal labels for Pro users
-            tvSetZoneLabel.text = "Set\nZone"
-            tvMotionLabel.text = "Motion"
-            tvNoiseLabel.text = "Noise"
+            tvSetZoneLabel.text = "Set Motion\nZone"
+            tvMotionLabel.text = "Motion\nAlerts"
+            tvNoiseLabel.text = "Noise\nAlerts"
             
             // Enable for Pro users
             btnSetZone.alpha = 1.0f

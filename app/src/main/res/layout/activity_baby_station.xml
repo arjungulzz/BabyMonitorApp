@@ -28,7 +28,7 @@
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp"
+        android:padding="12dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <!-- Status Pill -->
@@ -38,9 +38,9 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:background="@drawable/bg_status_pill"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="10dp"
+            android:background="@android:color/transparent"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="4dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
@@ -76,7 +76,7 @@
                 android:id="@+id/btnInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
+                android:layout_marginEnd="8dp"
                 app:srcCompat="@drawable/ic_info"
                 app:tint="@color/text_primary"
                 app:backgroundTint="@color/surface_white"
@@ -105,9 +105,14 @@
         android:orientation="vertical"
         android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:paddingTop="12dp"
-        android:paddingBottom="16dp"
-        android:paddingHorizontal="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingHorizontal="12dp"
         android:background="@drawable/bg_control_panel">
 
         <!-- Zoom Controls -->
@@ -177,8 +182,8 @@
                     app:srcCompat="@drawable/ic_flip_camera"
                     app:tint="@color/text_primary"
                     app:backgroundTint="@color/surface_white"
-                    app:fabSize="normal" 
-                    app:elevation="4dp"
+                    app:fabSize="mini" 
+                    app:elevation="2dp"
                     app:borderWidth="0dp"/>
                 
                 <TextView
@@ -206,8 +211,8 @@
                     app:srcCompat="@drawable/ic_mic_on"
                     app:tint="@color/text_primary"
                     app:backgroundTint="@color/surface_white"
-                    app:fabSize="normal"
-                    app:elevation="4dp"
+                    app:fabSize="mini"
+                    app:elevation="2dp"
                     app:borderWidth="0dp"/>
 
                 <TextView
@@ -236,8 +241,8 @@
                     app:srcCompat="@drawable/ic_flash_off"
                     app:tint="@color/text_primary"
                     app:backgroundTint="@color/surface_white"
-                    app:fabSize="normal"
-                    app:elevation="4dp"
+                    app:fabSize="mini"
+                    app:elevation="2dp"
                     app:borderWidth="0dp"/>
 
                 <TextView
@@ -305,8 +310,9 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="@drawable/bg_control_panel"
-        android:paddingVertical="12dp"
-        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="4dp"
+        android:layout_marginEnd="8dp"
         android:gravity="center"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/layoutControls"
@@ -340,15 +346,15 @@
                 app:srcCompat="@drawable/ic_crop"
                 app:tint="@color/text_primary"
                 app:backgroundTint="@color/surface_white"
-                app:fabSize="normal"
-                app:elevation="4dp"
+                app:fabSize="mini"
+                app:elevation="2dp"
                 app:borderWidth="0dp"/>
 
             <TextView
                 android:id="@+id/tvSetZoneLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Set\nZone"
+                android:text="Set Motion\nZone"
                 android:gravity="center"
                 android:textColor="#E6FFFFFF"
                 android:textSize="10sp"
@@ -371,15 +377,15 @@
                 app:srcCompat="@drawable/ic_motion"
                 app:tint="@color/text_primary"
                 app:backgroundTint="@color/surface_white"
-                app:fabSize="normal"
-                app:elevation="4dp"
+                app:fabSize="mini"
+                app:elevation="2dp"
                 app:borderWidth="0dp"/>
 
             <TextView
                 android:id="@+id/tvMotionLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Motion"
+                android:text="Motion\nAlerts"
                 android:gravity="center"
                 android:textColor="#E6FFFFFF"
                 android:textSize="10sp"
@@ -402,15 +408,15 @@
                 app:srcCompat="@drawable/ic_volume_up"
                 app:tint="@color/text_primary"
                 app:backgroundTint="@color/surface_white"
-                app:fabSize="normal"
-                app:elevation="4dp"
+                app:fabSize="mini"
+                app:elevation="2dp"
                 app:borderWidth="0dp"/>
 
             <TextView
                 android:id="@+id/tvNoiseLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Noise"
+                android:text="Noise\nAlerts"
                 android:gravity="center"
                 android:textColor="#E6FFFFFF"
                 android:textSize="10sp"

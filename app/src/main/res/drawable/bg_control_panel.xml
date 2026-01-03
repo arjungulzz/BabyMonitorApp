@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#50000000" />
-    <corners
-        android:topLeftRadius="24dp"
-        android:topRightRadius="24dp" />
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <corners android:radius="0dp" />
+    <!-- Removed stroke and background color for pure floating icons -->
 </shape>
