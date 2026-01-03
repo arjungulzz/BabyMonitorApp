@@ -312,6 +312,20 @@
         app:layout_constraintBottom_toTopOf="@id/layoutControls"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- Pro Badge Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PRO"
+            android:textColor="@android:color/white"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
+            android:background="@drawable/bg_pro_badge"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:layout_marginBottom="12dp"/>
+
         <!-- Set Zone -->
         <LinearLayout
             android:layout_width="wrap_content"
@@ -331,6 +345,7 @@
                 app:borderWidth="0dp"/>
 
             <TextView
+                android:id="@+id/tvSetZoneLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Set\nZone"
@@ -345,7 +360,7 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -361,6 +376,7 @@
                 app:borderWidth="0dp"/>
 
             <TextView
+                android:id="@+id/tvMotionLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Motion"
@@ -375,7 +391,7 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -391,6 +407,7 @@
                 app:borderWidth="0dp"/>
 
             <TextView
+                android:id="@+id/tvNoiseLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Noise"

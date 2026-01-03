@@ -813,7 +813,16 @@ class BabyStationActivity : AppCompatActivity() {
         val btnMotion = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProMotion)
         val btnNoise = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProNoise)
         
+        val tvSetZoneLabel = findViewById<android.widget.TextView>(R.id.tvSetZoneLabel)
+        val tvMotionLabel = findViewById<android.widget.TextView>(R.id.tvMotionLabel)
+        val tvNoiseLabel = findViewById<android.widget.TextView>(R.id.tvNoiseLabel)
+        
         if (!isPro) {
+            // Add lock emoji to labels for free users
+            tvSetZoneLabel.text = "Set\nZone 🔒"
+            tvMotionLabel.text = "Motion 🔒"
+            tvNoiseLabel.text = "Noise 🔒"
+            
             // Disable and dim for free users
             btnSetZone.alpha = 0.5f
             btnMotion.alpha = 0.5f
@@ -823,6 +832,11 @@ class BabyStationActivity : AppCompatActivity() {
             btnMotion.setOnClickListener { showPremiumPrompt("Motion Alerts") }
             btnNoise.setOnClickListener { showPremiumPrompt("Noise Alerts") }
         } else {
+            // Normal labels for Pro users
+            tvSetZoneLabel.text = "Set\nZone"
+            tvMotionLabel.text = "Motion"
+            tvNoiseLabel.text = "Noise"
+            
             // Enable for Pro users
             btnSetZone.alpha = 1.0f
             btnMotion.alpha = 1.0f
