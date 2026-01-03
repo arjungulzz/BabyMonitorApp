@@ -181,6 +181,10 @@ class BabyStationActivity : AppCompatActivity() {
             )
             resetInactivityTimer()
         }
+        
+        findViewById<android.view.View>(R.id.btnEcoMode).setOnClickListener {
+             startEcoModeCountdown()
+        }
 
         seekZoom.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
@@ -248,10 +252,46 @@ class BabyStationActivity : AppCompatActivity() {
     }
 
     private val ecoModeRunnable = Runnable { enableEcoMode(true) }
+    
+    // Manual Eco Mode Countdown
+    private var ecoCountdown = 5
+    
+    private val manualCountdownRunnable: Runnable = object : Runnable {
+        override fun run() {
+            val tvEco = findViewById<android.widget.TextView>(R.id.tvEcoCountdown)
+            if (ecoCountdown > 0) {
+                if (tvEco.visibility != android.view.View.VISIBLE) {
+                    tvEco.alpha = 0f
+                    tvEco.visibility = android.view.View.VISIBLE
+                    tvEco.animate().alpha(1f).setDuration(200).start()
+                }
+                tvEco.text = "Dimming screen in $ecoCountdown seconds to save power. Tap anywhere to wake"
+                
+                ecoCountdown--
+                handler.postDelayed(this, 1000)
+            } else {
+                tvEco.animate().alpha(0f).setDuration(200).withEndAction {
+                    tvEco.visibility = android.view.View.GONE
+                }.start()
+                enableEcoMode(true)
+            }
+        }
+    }
+    
     private fun resetInactivityTimer() {
         handler.removeCallbacks(ecoModeRunnable)
+        handler.removeCallbacks(manualCountdownRunnable)
+        
+        // Hide overlay if visible
+        val tvEco = findViewById<android.widget.TextView>(R.id.tvEcoCountdown)
+        if (tvEco != null && tvEco.visibility == android.view.View.VISIBLE) {
+            tvEco.animate().alpha(0f).setDuration(150).withEndAction {
+                tvEco.visibility = android.view.View.GONE
+            }.start()
+        }
+        
         enableEcoMode(false)
-        handler.postDelayed(ecoModeRunnable, 15000) // 15 seconds
+        // Auto-eco mode disabled. Manual only.
     }
 
     override fun dispatchTouchEvent(ev: android.view.MotionEvent?): Boolean {
@@ -922,6 +962,13 @@ class BabyStationActivity : AppCompatActivity() {
         } else {
             // android.widget.Toast.makeText(this, "Noise Alerts Disabled", android.widget.Toast.LENGTH_SHORT).show()
         }
+    }
+    
+    private fun startEcoModeCountdown() {
+        ecoCountdown = 5
+        // Start runnable immediately to show 5s
+        handler.removeCallbacks(manualCountdownRunnable)
+        manualCountdownRunnable.run()
     }
     
     private fun updateNoiseAlertsUI() {

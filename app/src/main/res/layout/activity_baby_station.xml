@@ -162,7 +162,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:baselineAligned="false"
-            android:weightSum="3">
+            android:weightSum="4">
 
 
 
@@ -255,9 +255,64 @@
                     android:fontFamily="sans-serif-medium"
                     android:layout_marginTop="8dp"/>
             </LinearLayout>
+
+            <!-- Eco Mode -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnEcoMode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:srcCompat="@drawable/ic_eco"
+                    app:tint="@color/text_primary"
+                    app:backgroundTint="@color/surface_white"
+                    app:fabSize="mini"
+                    app:elevation="2dp"
+                    app:borderWidth="0dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Eco Mode"
+                    android:textColor="#E6FFFFFF"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
             
         </LinearLayout>
     </LinearLayout>
+
+    <!-- Eco Mode Countdown Overlay -->
+    <TextView
+        android:id="@+id/tvEcoCountdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_toast_dark"
+        android:text="Dimming screen in 5 seconds..."
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:letterSpacing="0.02"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center_vertical"
+        android:drawableStart="@drawable/ic_eco"
+        android:drawablePadding="12dp"
+        android:drawableTint="@color/success_green"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/layoutControls"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="32dp"
+        app:layout_constrainedWidth="true"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp"
+        android:elevation="8dp"/>
+
 
 
 
