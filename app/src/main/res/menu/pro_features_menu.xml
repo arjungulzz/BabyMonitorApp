@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/group_pro_features">
+        <item
+            android:id="@+id/nav_set_zone"
+            android:icon="@drawable/ic_crop"
+            android:title="Set Zone" />
+        <item
+            android:id="@+id/nav_motion_alerts"
+            android:icon="@drawable/ic_motion"
+            android:title="Motion Alerts" />
+        <item
+            android:id="@+id/nav_noise_alerts"
+            android:icon="@drawable/ic_volume_up"
+            android:title="Noise Alerts" />
+    </group>
+    <item
+        android:id="@+id/nav_upgrade"
+        android:icon="@drawable/ic_star"
+        android:title="Upgrade to Pro" />
+</menu>

@@ -157,52 +157,8 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:baselineAligned="false"
-            android:weightSum="4">
+            android:weightSum="3">
 
-            <!-- Set Zone -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/btnSetZone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/ic_crop"
-                    app:tint="@color/text_primary"
-                    app:backgroundTint="@color/surface_white"
-                    app:fabSize="normal"
-                    app:elevation="4dp"
-                    app:borderWidth="0dp"/>
-
-                <TextView
-                    android:id="@+id/tvProBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:background="@drawable/bg_pro_badge"
-                    android:text="PRO"
-                    android:textColor="@android:color/white"
-                    android:textSize="10sp"
-                    android:fontFamily="sans-serif-medium"
-                    android:paddingHorizontal="6dp"
-                    android:paddingVertical="2dp"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/tvZoneLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Set\nZone"
-                    android:gravity="center"
-                    android:textColor="#E6FFFFFF"
-                    android:textSize="12sp"
-                    android:fontFamily="sans-serif-medium"
-                    android:layout_marginTop="8dp"/>
-            </LinearLayout>
 
 
 
@@ -340,5 +296,111 @@
                 android:layout_marginTop="8dp"/>
         </LinearLayout>
     </FrameLayout>
+
+
+    <!-- Permanent Vertical Pro Sidebar (Right Side) -->
+    <LinearLayout
+        android:id="@+id/proSidebar"
+        android:layout_width="80dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:background="@drawable/bg_pro_sidebar"
+        android:padding="8dp"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/layoutControls"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Set Zone -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="60dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnProSetZone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_crop"
+                app:tint="@color/text_primary"
+                app:backgroundTint="@color/surface_white"
+                app:fabSize="mini"
+                app:elevation="4dp"
+                app:borderWidth="0dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Set\nZone"
+                android:gravity="center"
+                android:textColor="#E6FFFFFF"
+                android:textSize="10sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <!-- Motion Alerts -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnProMotion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_motion"
+                app:tint="@color/text_primary"
+                app:backgroundTint="@color/surface_white"
+                app:fabSize="mini"
+                app:elevation="4dp"
+                app:borderWidth="0dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Motion"
+                android:gravity="center"
+                android:textColor="#E6FFFFFF"
+                android:textSize="10sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <!-- Noise Alerts -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnProNoise"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_volume_up"
+                app:tint="@color/text_primary"
+                app:backgroundTint="@color/surface_white"
+                app:fabSize="mini"
+                app:elevation="4dp"
+                app:borderWidth="0dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Noise"
+                android:gravity="center"
+                android:textColor="#E6FFFFFF"
+                android:textSize="10sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

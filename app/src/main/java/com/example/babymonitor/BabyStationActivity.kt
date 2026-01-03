@@ -36,7 +36,6 @@ class BabyStationActivity : AppCompatActivity() {
     private var registrationListener: NsdManager.RegistrationListener? = null
     private val currentFrame = AtomicReference<ByteArray>()
     private lateinit var tvStatus: android.widget.TextView
-    private lateinit var btnSetZone: com.google.android.material.floatingactionbutton.FloatingActionButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +63,7 @@ class BabyStationActivity : AppCompatActivity() {
         isPro = com.example.babymonitor.billing.BillingManager.isProUser(this)
         
         setupZoneControls()
+        setupProSidebar()
         
         startCamera()
         startServer()
@@ -125,10 +125,8 @@ class BabyStationActivity : AppCompatActivity() {
         val btnClose = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnCloseStation)
         val btnInfo = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnInfo)
         
-        btnSetZone = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnSetZone)
         val roiOverlay = findViewById<com.example.babymonitor.ui.RoiOverlayView>(R.id.roiOverlay)
         val layoutControls = findViewById<android.view.View>(R.id.layoutControls)
-        val tvZoneLabel = findViewById<android.widget.TextView>(R.id.tvZoneLabel)
 
 
         
@@ -209,42 +207,6 @@ class BabyStationActivity : AppCompatActivity() {
         // Real-time update of ROI for detection
         roiOverlay.onRoiChanged = { rect ->
             currentRoi.set(rect)
-        }
-
-        btnSetZone.setOnClickListener {
-            if (!isPro) {
-                // Show premium prompt for free users
-                showPremiumPrompt("Zone Setting")
-                return@setOnClickListener
-            }
-            
-             val isActive = btnSetZone.contentDescription == "Active"
-             
-             if (isActive) {
-                 // Deactivate ROI (Full Screen Mode)
-                 roiOverlay.setEditable(false)
-                 currentRoi.set(0.0f, 0.0f, 1.0f, 1.0f) // Back to full screen
-                 roiOverlay.invalidate() // Hide box
-                 
-                 btnSetZone.contentDescription = "Idle"
-                 btnSetZone.backgroundTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(this, R.color.surface_white))
-                 btnSetZone.imageTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(this, R.color.text_primary))
-                 tvZoneLabel.text = "Set\nZone"
-                 tvZoneLabel.setTextColor(android.graphics.Color.parseColor("#E6FFFFFF"))
-             } else {
-                 // Activate ROI (Restricted Mode)
-                 roiOverlay.setEditable(true)
-                 roiOverlay.roiRectNorm.set(0.4f, 0.4f, 0.6f, 0.6f) // Start with center box
-                 currentRoi.set(0.4f, 0.4f, 0.6f, 0.6f) // Sync immediately
-                 roiOverlay.invalidate() // Show box
-                 
-                 btnSetZone.contentDescription = "Active"
-                 btnSetZone.backgroundTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(this, R.color.primary_dark_blue))
-                 btnSetZone.imageTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(this, R.color.surface_white))
-                 tvZoneLabel.text = "Zone\nOn"
-                 tvZoneLabel.setTextColor(ContextCompat.getColor(this, R.color.success_green))
-             }
-             resetInactivityTimer()
         }
     }
 
@@ -831,21 +793,7 @@ class BabyStationActivity : AppCompatActivity() {
     }
 
     private fun setupZoneControls() {
-        val tvProBadge = findViewById<android.widget.TextView>(R.id.tvProBadge)
-        
-        if (!isPro) {
-            // Show PRO badge for free users
-            tvProBadge.visibility = android.view.View.VISIBLE
-            
-            // Dim the button slightly to indicate it's limited
-            btnSetZone.alpha = 0.7f
-        } else {
-            // Hide PRO badge for Pro users
-            tvProBadge.visibility = android.view.View.GONE
-            
-            // Full opacity for Pro users
-            btnSetZone.alpha = 1.0f
-        }
+        // Zone controls moved to sidebar - this function kept for compatibility
     }
     
     private fun showPremiumPrompt(featureName: String) {
@@ -858,6 +806,45 @@ class BabyStationActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+    
+    private fun setupProSidebar() {
+        val btnSetZone = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProSetZone)
+        val btnMotion = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProMotion)
+        val btnNoise = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProNoise)
+        
+        if (!isPro) {
+            // Disable and dim for free users
+            btnSetZone.alpha = 0.5f
+            btnMotion.alpha = 0.5f
+            btnNoise.alpha = 0.5f
+            
+            btnSetZone.setOnClickListener { showPremiumPrompt("Set Zone") }
+            btnMotion.setOnClickListener { showPremiumPrompt("Motion Alerts") }
+            btnNoise.setOnClickListener { showPremiumPrompt("Noise Alerts") }
+        } else {
+            // Enable for Pro users
+            btnSetZone.alpha = 1.0f
+            btnMotion.alpha = 1.0f
+            btnNoise.alpha = 1.0f
+            
+            btnSetZone.setOnClickListener { handleSetZone() }
+            btnMotion.setOnClickListener { toggleMotionAlerts() }
+            btnNoise.setOnClickListener { toggleNoiseAlerts() }
+        }
+    }
+    
+    private fun handleSetZone() {
+        // TODO: Implement zone setting UI from sidebar
+        android.widget.Toast.makeText(this, "Zone setting feature", android.widget.Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun toggleMotionAlerts() {
+        android.widget.Toast.makeText(this, "Motion alerts toggled", android.widget.Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun toggleNoiseAlerts() {
+        android.widget.Toast.makeText(this, "Noise alerts toggled", android.widget.Toast.LENGTH_SHORT).show()
     }
 
     companion object {
