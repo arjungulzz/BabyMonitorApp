@@ -244,6 +244,9 @@ class MainActivity : AppCompatActivity() {
         if (allPermissionsGranted()) {
             startActivity(Intent(this, BabyStationActivity::class.java))
         } else {
+             val prefs = getSharedPreferences("BabyMonitorPerms", android.content.Context.MODE_PRIVATE)
+             val firstRequestDone = prefs.getBoolean("first_request_done", false)
+
              // Check if we should show rationale
              if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.CAMERA)) {
                  android.app.AlertDialog.Builder(this)
@@ -258,9 +261,25 @@ class MainActivity : AppCompatActivity() {
                      .create()
                      .show()
              } else {
-                ActivityCompat.requestPermissions(
-                    this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-                )
+                 if (firstRequestDone) {
+                     // Case 3: User denied permanently or System blocked it
+                     android.app.AlertDialog.Builder(this)
+                         .setTitle("Permissions Blocked")
+                         .setMessage("Camera and Audio permissions are required to use this feature.\n\nPlease enable them in Settings.")
+                         .setPositiveButton("Open Settings") { _, _ ->
+                             val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                             intent.data = android.net.Uri.fromParts("package", packageName, null)
+                             startActivity(intent)
+                         }
+                         .setNegativeButton("Cancel", null)
+                         .show()
+                 } else {
+                     // Case 1: First time
+                     prefs.edit().putBoolean("first_request_done", true).apply()
+                     ActivityCompat.requestPermissions(
+                         this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                     )
+                 }
              }
         }
     }
