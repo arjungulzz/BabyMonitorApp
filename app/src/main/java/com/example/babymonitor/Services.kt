@@ -52,7 +52,7 @@ class BabyMarkerService : Service() {
             // Start foreground with notification
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Baby Station Active 👶")
-                .setContentText("Background audio monitoring is on")
+                .setContentText("Monitoring is active")
                 .setSmallIcon(R.drawable.ic_notification)
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
