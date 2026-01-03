@@ -109,6 +109,7 @@ class BabyStationActivity : AppCompatActivity() {
 
     private var isPro = false
     private var isNoiseAlert = false
+    private var isNoiseAlertsEnabled = false // Default OFF, user must enable
     private var lastMotionDetectedTime = 0L
     private var previousLuma: ByteArray? = null
     
@@ -157,6 +158,13 @@ class BabyStationActivity : AppCompatActivity() {
             btnMic.setImageResource(if (isMicMuted) R.drawable.ic_mic_off else R.drawable.ic_mic_on)
             tvMicLabel.text = if (isMicMuted) "Mic Off" else "Mic On"
             resetInactivityTimer()
+            
+            // If mic is muted, we MUST disable noise alerts as we can't hear anything
+            if (isMicMuted && isNoiseAlertsEnabled) {
+                isNoiseAlertsEnabled = false
+                updateNoiseAlertsUI()
+                android.widget.Toast.makeText(this, "Noise alerts disabled (Mic Muted)", android.widget.Toast.LENGTH_SHORT).show()
+            }
         }
 
         btnFlash.setOnClickListener {
@@ -710,8 +718,8 @@ class BabyStationActivity : AppCompatActivity() {
                                  } else {
                                      val read = audioRecord.read(buffer, 0, minBufSize)
                                      if (read > 0) {
-                                         // Noise Detection (Pro)
-                                         if (isPro) {
+                                        // Noise Detection (Pro)
+                                        if (isPro && isNoiseAlertsEnabled) {
                                              var sum = 0.0
                                              for (i in 0 until read step 2) {
                                                   val sample = (buffer[i].toInt() and 0xFF) or (buffer[i + 1].toInt() shl 8)
@@ -830,8 +838,14 @@ class BabyStationActivity : AppCompatActivity() {
             .setTitle("Premium Feature")
             .setMessage("$featureName is a premium feature. Upgrade to Pro to unlock zone configuration and other advanced features.")
             .setPositiveButton("Upgrade") { _, _ ->
-                // User wants to upgrade - you can add navigation to billing here
-                android.widget.Toast.makeText(this, "Upgrade flow coming soon!", android.widget.Toast.LENGTH_SHORT).show()
+                com.example.babymonitor.billing.BillingManager.purchasePro(this) {
+                    // Purchase successful
+                    isPro = true
+                    runOnUiThread {
+                        setupProSidebar() // Refresh UI to unlock features
+                        android.widget.Toast.makeText(this, "Welcome to Pro Mode! 👑", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -845,6 +859,22 @@ class BabyStationActivity : AppCompatActivity() {
         val tvSetZoneLabel = findViewById<android.widget.TextView>(R.id.tvSetZoneLabel)
         val tvMotionLabel = findViewById<android.widget.TextView>(R.id.tvMotionLabel)
         val tvNoiseLabel = findViewById<android.widget.TextView>(R.id.tvNoiseLabel)
+        
+        // Update Noise UI based on current state
+        if (isPro) {
+            val btnNoise = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProNoise)
+            btnNoise.setImageResource(if (isNoiseAlertsEnabled) R.drawable.ic_volume_up else R.drawable.ic_volume_off)
+            tvNoiseLabel.text = if (isNoiseAlertsEnabled) "Noise\nAlerts: ON" else "Noise\nAlerts: OFF"
+            
+            // Update color to indicate active state
+            if (isNoiseAlertsEnabled) {
+                 btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.success_green))
+                 tvNoiseLabel.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.success_green))
+            } else {
+                 btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
+                 tvNoiseLabel.setTextColor(android.graphics.Color.parseColor("#E6FFFFFF"))
+            }
+        }
         
         if (!isPro) {
             // Add lock emoji to labels for free users
@@ -887,7 +917,41 @@ class BabyStationActivity : AppCompatActivity() {
     }
     
     private fun toggleNoiseAlerts() {
-        android.widget.Toast.makeText(this, "Noise alerts toggled", android.widget.Toast.LENGTH_SHORT).show()
+        if (!isNoiseAlertsEnabled) {
+             // We are about to ENABLE it. Check dependency.
+             if (isMicMuted) {
+                 // Auto-unmute mic
+                 isMicMuted = false
+                 findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnMicToggle).setImageResource(R.drawable.ic_mic_on)
+                 findViewById<android.widget.TextView>(R.id.tvMicLabel).text = "Mic On"
+                 android.widget.Toast.makeText(this, "Mic unmuted for noise alerts", android.widget.Toast.LENGTH_SHORT).show()
+             }
+        }
+        
+        isNoiseAlertsEnabled = !isNoiseAlertsEnabled
+        updateNoiseAlertsUI()
+        
+        if (isNoiseAlertsEnabled) {
+             android.widget.Toast.makeText(this, "Noise Alerts Enabled", android.widget.Toast.LENGTH_SHORT).show()
+        } else {
+             android.widget.Toast.makeText(this, "Noise Alerts Disabled", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun updateNoiseAlertsUI() {
+        val btnNoise = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProNoise)
+        val tvNoiseLabel = findViewById<android.widget.TextView>(R.id.tvNoiseLabel)
+        
+        btnNoise.setImageResource(if (isNoiseAlertsEnabled) R.drawable.ic_volume_up else R.drawable.ic_volume_off)
+        tvNoiseLabel.text = if (isNoiseAlertsEnabled) "Noise\nAlerts: ON" else "Noise\nAlerts: OFF"
+        
+        if (isNoiseAlertsEnabled) {
+             btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.success_green))
+             tvNoiseLabel.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.success_green))
+        } else {
+             btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
+             tvNoiseLabel.setTextColor(android.graphics.Color.parseColor("#E6FFFFFF"))
+        }
     }
 
     companion object {
