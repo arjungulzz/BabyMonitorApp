@@ -72,11 +72,19 @@ class BabyStationActivity : AppCompatActivity() {
 
         resetInactivityTimer()
         
-        // Request notification permission on Android 13+
+        // Request permissions
+        val permissions = mutableListOf<String>()
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            permissions.add(android.Manifest.permission.RECORD_AUDIO)
+        }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 100)
+                permissions.add(android.Manifest.permission.POST_NOTIFICATIONS)
             }
+        }
+        
+        if (permissions.isNotEmpty()) {
+            requestPermissions(permissions.toTypedArray(), 100)
         }
         
         // Start foreground service immediately
@@ -722,6 +730,7 @@ class BabyStationActivity : AppCompatActivity() {
                 val minBufSize = android.media.AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
 
                 if (androidx.core.app.ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    android.util.Log.d(TAG, "AudioServer: Starting recording. SampleRate=$sampleRate, BufSize=$minBufSize")
                     
                     audioRecord = android.media.AudioRecord(
                         android.media.MediaRecorder.AudioSource.MIC,
@@ -791,6 +800,8 @@ class BabyStationActivity : AppCompatActivity() {
                              e.printStackTrace()
                          }
                     }
+                } else {
+                    android.util.Log.e(TAG, "AudioServer: RECORD_AUDIO permission NOT granted")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
