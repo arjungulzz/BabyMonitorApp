@@ -41,14 +41,23 @@ class BabyMarkerService : Service() {
         try {
             android.util.Log.d("BabyMarkerService", "Creating notification...")
             
+            // Create Stop PendingIntent
+            val stopIntent = Intent(this, BabyMarkerService::class.java).apply {
+                action = ACTION_STOP
+            }
+            val stopPendingIntent = PendingIntent.getService(
+                this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
             // Start foreground with notification
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Baby Station Active")
-                .setContentText("Monitoring in progress...")
+                .setContentTitle("Baby Station Active 👶")
+                .setContentText("Background audio monitoring is on")
                 .setSmallIcon(R.drawable.ic_notification)
                 .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_HIGH) // Changed to HIGH for visibility
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(createContentIntent())
+                .addAction(R.drawable.ic_close, "Stop Monitor", stopPendingIntent)
                 .build()
             
             android.util.Log.d("BabyMarkerService", "Starting foreground service...")
