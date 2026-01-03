@@ -50,6 +50,9 @@ dependencies {
     implementation(libs.google.ads)
     implementation(libs.guava)
     
+    // SwipeRefreshLayout
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    
     // In-App Review
     implementation("com.google.android.play:review-ktx:2.0.1")
     

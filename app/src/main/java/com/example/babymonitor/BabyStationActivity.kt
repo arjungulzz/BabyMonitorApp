@@ -69,12 +69,37 @@ class BabyStationActivity : AppCompatActivity() {
 
         resetInactivityTimer()
         
+        // Request notification permission on Android 13+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 100)
+            }
+        }
+        
+        // Start foreground service immediately
+        startBabyStationService()
+        
+        // Register receiver for stop action from notification
+        val stopFilter = android.content.IntentFilter("com.example.babymonitor.ACTION_STOP_MONITORING")
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(stopMonitoringReceiver, stopFilter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(stopMonitoringReceiver, stopFilter)
+        }
+        
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 cancelServiceAndBroadcast()
                 finish()
             }
         })
+    }
+    
+    private val stopMonitoringReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            android.util.Log.d(TAG, "Stop monitoring broadcast received")
+            finish()
+        }
     }
 
 
@@ -537,19 +562,36 @@ class BabyStationActivity : AppCompatActivity() {
         android.util.Log.d(TAG, "BabyStationActivity: onResume")
         
         startAudioServer()
-        startService(android.content.Intent(this, BabyMarkerService::class.java))
+    }
+    
+    private fun startBabyStationService() {
+        // Start foreground service
+        val serviceIntent = android.content.Intent(this, BabyMarkerService::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        android.util.Log.d("BabyMonitor", "BabyStation: onStop")
-        cancelServiceAndBroadcast()
+        android.util.Log.d("BabyMonitor", "BabyStation: onStop - keeping NSD service active for eco mode")
+        // Don't cancel service here - keep NSD broadcasting even when screen is off
     }
 
     override fun onDestroy() {
         super.onDestroy()
         android.util.Log.d("BabyMonitor", "BabyStation: onDestroy")
         isRunning = false
+        
+        // Unregister stop monitoring receiver
+        try {
+            unregisterReceiver(stopMonitoringReceiver)
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Error unregistering receiver", e)
+        }
+        
         cancelServiceAndBroadcast()
         server.stop()
         stopAudioServer()

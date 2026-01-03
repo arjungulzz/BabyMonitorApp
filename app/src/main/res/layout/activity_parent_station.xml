@@ -1,18 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    android:id="@+id/swipeRefresh"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_light">
 
-    <!-- Header Section -->
+    <!-- Header Section with Gradient -->
+    <View
+        android:id="@+id/headerGradient"
+        android:layout_width="0dp"
+        android:layout_height="160dp"
+        android:background="@drawable/gradient_header"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <LinearLayout
         android:id="@+id/headerSection"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="@dimen/spacing_lg"
+        android:paddingStart="@dimen/spacing_lg"
+        android:paddingTop="60dp"
+        android:paddingEnd="@dimen/spacing_lg"
+        android:paddingBottom="@dimen/spacing_lg"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -21,11 +42,10 @@
             android:id="@+id/tvHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="sans-serif-black"
             android:text="Available Monitors"
             android:textColor="@color/text_primary"
-            android:textSize="@dimen/text_size_xxl"
-            android:textStyle="bold" />
+            android:textSize="24sp" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -35,6 +55,7 @@
             android:orientation="horizontal">
 
             <View
+                android:id="@+id/statusIndicator"
                 android:layout_width="8dp"
                 android:layout_height="8dp"
                 android:layout_marginEnd="@dimen/spacing_sm"
@@ -54,12 +75,13 @@
     <!-- Empty State -->
     <LinearLayout
         android:id="@+id/emptyState"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/spacing_lg"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/btnRefresh"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/headerSection">
@@ -68,7 +90,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="📡"
-            android:textSize="64sp" />
+            android:textSize="80sp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -76,16 +98,17 @@
             android:layout_marginTop="@dimen/spacing_md"
             android:text="No monitors found"
             android:textColor="@color/text_primary"
-            android:textSize="@dimen/text_size_lg"
-            android:textStyle="bold" />
+            android:textSize="20sp"
+            android:fontFamily="sans-serif-medium" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_xs"
-            android:text="Make sure Baby Station is running"
+            android:gravity="center"
+            android:text="Pull down to refresh\nor start Baby Station on another device"
             android:textColor="@color/text_secondary"
-            android:textSize="@dimen/text_size_sm" />
+            android:textSize="@dimen/text_size_md" />
     </LinearLayout>
 
     <!-- Progress Bar -->
@@ -95,7 +118,7 @@
         android:layout_height="wrap_content"
         android:indeterminateTint="@color/primary_blue"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/btnRefresh"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/headerSection" />
@@ -106,44 +129,26 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:paddingVertical="@dimen/spacing_sm"
-        app:layout_constraintBottom_toTopOf="@id/btnRefresh"
+        android:paddingTop="@dimen/spacing_sm"
+        android:paddingBottom="80dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/headerSection"
         tools:listitem="@layout/item_server_card" />
 
-    <!-- Refresh Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnRefresh"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="0dp"
-        android:layout_height="@dimen/button_height"
-        android:layout_marginHorizontal="@dimen/spacing_lg"
-        android:layout_marginBottom="@dimen/spacing_md"
-        android:fontFamily="sans-serif-medium"
-        android:text="Refresh Scan"
-        android:textColor="@color/primary_blue"
-        android:textSize="@dimen/text_size_md"
-        app:cornerRadius="@dimen/button_corner_radius"
-        app:icon="@drawable/ic_refresh"
-        app:iconTint="@color/primary_blue"
-        app:layout_constraintBottom_toTopOf="@id/adView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:strokeColor="@color/primary_blue"
-        app:strokeWidth="2dp" />
-
-    <!-- AdView -->
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing_md"
-        app:adSize="BANNER"
-        app:adUnitId="ca-app-pub-3940256099942544/6300978111"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+<!-- AdView (Fixed at bottom, outside scroll) -->
+<com.google.android.gms.ads.AdView
+    android:id="@+id/adView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|center_horizontal"
+    android:layout_marginBottom="@dimen/spacing_md"
+    app:adSize="BANNER"
+    app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+
+</FrameLayout>

@@ -28,7 +28,8 @@ class ParentStationActivity : AppCompatActivity() {
 
     private lateinit var tvStatus: TextView
     private lateinit var progressBar: ProgressBar
-    private lateinit var btnRefresh: Button
+    private lateinit var swipeRefresh: androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    private lateinit var statusIndicator: View
     private val handler = Handler(Looper.getMainLooper())
     private var isDiscovering = false
 
@@ -38,11 +39,27 @@ class ParentStationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_parent_station)
+        
+        // Handle edge-to-edge display
+        setupWindowInsets()
 
         tvStatus = findViewById(R.id.tvStatus)
         progressBar = findViewById(R.id.progressBar)
-        btnRefresh = findViewById(R.id.btnRefresh)
-        btnRefresh.setOnClickListener {
+        swipeRefresh = findViewById(R.id.swipeRefresh)
+        statusIndicator = findViewById(R.id.statusIndicator)
+        
+        // Setup pull-to-refresh
+        swipeRefresh.setColorSchemeColors(
+            androidx.core.content.ContextCompat.getColor(this, R.color.primary_blue),
+            androidx.core.content.ContextCompat.getColor(this, R.color.accent_coral)
+        )
+        
+        // Set progress view offset to avoid camera hinge
+        swipeRefresh.setProgressViewOffset(false, 150, 300)
+        
+        swipeRefresh.setOnRefreshListener {
+            // Haptic feedback
+            swipeRefresh.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
             startDiscovery()
         }
 
@@ -56,7 +73,7 @@ class ParentStationActivity : AppCompatActivity() {
         // Handle window insets for navigation bars
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(adView) { view, insets ->
             val systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-            val layoutParams = view.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
+            val layoutParams = view.layoutParams as android.widget.FrameLayout.LayoutParams
             layoutParams.bottomMargin = systemBars.bottom + resources.getDimensionPixelSize(R.dimen.spacing_md)
             view.layoutParams = layoutParams
             insets
@@ -77,6 +94,12 @@ class ParentStationActivity : AppCompatActivity() {
             showConnectingDialog(service)
         }
         recyclerView.adapter = adapter
+        
+        // Add item animator for smooth animations
+        recyclerView.itemAnimator = androidx.recyclerview.widget.DefaultItemAnimator().apply {
+            addDuration = 300
+            removeDuration = 300
+        }
     }
 
     private fun showConnectingDialog(service: NsdServiceInfo) {
@@ -146,7 +169,23 @@ class ParentStationActivity : AppCompatActivity() {
             val host = service.host?.hostAddress ?: "Unknown"
             holder.tvIp.text = "$host:${service.port}"
             
-            holder.btnConnect.setOnClickListener { onClick(service) }
+            // Scale animation on appear
+            holder.itemView.alpha = 0f
+            holder.itemView.scaleX = 0.9f
+            holder.itemView.scaleY = 0.9f
+            holder.itemView.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(300)
+                .setStartDelay((position * 50).toLong())
+                .start()
+            
+            holder.btnConnect.setOnClickListener {
+                // Haptic feedback
+                it.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+                onClick(service)
+            }
             // Also allow clicking the card
             holder.itemView.setOnClickListener { onClick(service) }
         }
@@ -171,8 +210,8 @@ class ParentStationActivity : AppCompatActivity() {
         
         // Update UI state
         tvStatus.text = "Searching... (Found 0)"
-        progressBar.visibility = View.VISIBLE
-        btnRefresh.isEnabled = false
+        swipeRefresh.isRefreshing = true
+        startPulsingIndicator()
         recyclerView.visibility = View.GONE
         
         nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
@@ -205,16 +244,17 @@ class ParentStationActivity : AppCompatActivity() {
         
         isDiscovering = false
         runOnUiThread {
-            progressBar.visibility = View.GONE
-            btnRefresh.isEnabled = true
+            swipeRefresh.isRefreshing = false
+            stopPulsingIndicator()
             
             // Update main list from temp list
             services.addAll(foundServices)
             adapter.notifyDataSetChanged()
             
             if (services.isEmpty()) {
-                tvStatus.text = "No Baby Monitors found. Please check connection and try again."
+                tvStatus.text = "No Baby Monitors found. Pull to refresh."
                 recyclerView.visibility = View.GONE
+                findViewById<View>(R.id.emptyState).visibility = View.VISIBLE
             } else {
                 tvStatus.text = "Found ${services.size} monitor(s). Select to view."
                 recyclerView.visibility = View.VISIBLE
@@ -279,6 +319,45 @@ class ParentStationActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         stopDiscovery()
+    }
+    
+    private fun startPulsingIndicator() {
+        statusIndicator.animate()
+            .scaleX(1.3f)
+            .scaleY(1.3f)
+            .alpha(0.5f)
+            .setDuration(600)
+            .withEndAction {
+                if (isDiscovering) {
+                    statusIndicator.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .alpha(1f)
+                        .setDuration(600)
+                        .withEndAction {
+                            if (isDiscovering) startPulsingIndicator()
+                        }
+                        .start()
+                }
+            }
+            .start()
+    }
+    
+    private fun stopPulsingIndicator() {
+        statusIndicator.clearAnimation()
+        statusIndicator.scaleX = 1f
+        statusIndicator.scaleY = 1f
+        statusIndicator.alpha = 1f
+    }
+    
+    private fun setupWindowInsets() {
+        val headerGradient = findViewById<View>(R.id.headerGradient)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(headerGradient) { view, insets ->
+            val systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            view.layoutParams.height = 160 + systemBars.top
+            view.requestLayout()
+            insets
+        }
     }
 
     companion object {
