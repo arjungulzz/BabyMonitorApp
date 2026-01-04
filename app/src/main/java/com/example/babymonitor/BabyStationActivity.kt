@@ -890,21 +890,15 @@ class BabyStationActivity : AppCompatActivity() {
     }
     
     private fun showPremiumPrompt(featureName: String) {
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Premium Feature")
-            .setMessage("$featureName is a premium feature. Upgrade to Pro to unlock zone configuration and other advanced features.")
-            .setPositiveButton("Upgrade") { _, _ ->
-                com.example.babymonitor.billing.BillingManager.purchasePro(this) {
-                    // Purchase successful
-                    isPro = true
-                    runOnUiThread {
-                        setupProSidebar() // Refresh UI to unlock features
-                        android.widget.Toast.makeText(this, "Welcome to Pro Mode! 👑", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        // featureName is ignored in favor of the full benefit list
+        com.example.babymonitor.utils.DialogUtils.showProUpgradeDialog(this) {
+             // Purchase successful
+             isPro = true
+             runOnUiThread {
+                 setupProSidebar() // Refresh UI to unlock features
+                 android.widget.Toast.makeText(this, "Welcome to Pro Mode! 👑", android.widget.Toast.LENGTH_SHORT).show()
+             }
+        }
     }
     
     private fun setupProSidebar() {

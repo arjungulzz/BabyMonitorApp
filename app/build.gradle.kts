@@ -56,6 +56,9 @@ dependencies {
     // In-App Review
     implementation("com.google.android.play:review-ktx:2.0.1")
     
+    // Google Play Billing
+    implementation(libs.billing.ktx)
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

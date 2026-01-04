@@ -75,6 +75,9 @@ class MainActivity : AppCompatActivity() {
 
         setupMonetization()
         
+        // Auto-restore Pro status (background check)
+        com.example.babymonitor.billing.BillingManager.verifyProStatus(this)
+
         // Delay animations slightly to let layout settle and reduce startup jank
         window.decorView.postDelayed({
             setupEnterAnimations()
@@ -224,20 +227,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showProPurchaseDialog() {
-        android.app.AlertDialog.Builder(this)
-            .setTitle("Go Pro")
-            .setMessage("Remove ads and support development for just $4.99!") // Mock price
-            .setIcon(R.drawable.ic_crown)
-            .setPositiveButton("Purchase (Mock)") { _, _ ->
-                com.example.babymonitor.billing.BillingManager.purchasePro(this) {
-                    runOnUiThread {
-                        Toast.makeText(this, "Welcome to Pro Mode!", Toast.LENGTH_SHORT).show()
-                        setupMonetization() // Refresh UI
-                    }
-                }
+        com.example.babymonitor.utils.DialogUtils.showProUpgradeDialog(this) {
+            runOnUiThread {
+                Toast.makeText(this, "Welcome to Pro Mode!", Toast.LENGTH_SHORT).show()
+                setupMonetization() // Refresh UI
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        }
     }
 
     private fun checkPermissionsAndStart() {
