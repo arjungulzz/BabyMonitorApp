@@ -944,8 +944,38 @@ class BabyStationActivity : AppCompatActivity() {
     }
     
     private fun handleSetZone() {
-        // TODO: Implement zone setting UI from sidebar
-        android.widget.Toast.makeText(this, "Zone setting feature", android.widget.Toast.LENGTH_SHORT).show()
+        val btnSetZone = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProSetZone)
+        val roiOverlay = findViewById<com.example.babymonitor.ui.RoiOverlayView>(R.id.roiOverlay)
+
+        val isActive = btnSetZone.contentDescription == "Active"
+
+        if (isActive) {
+            // Deactivate ROI
+            roiOverlay.setEditable(false)
+            currentRoi.set(0.0f, 0.0f, 1.0f, 1.0f) // Reset to full screen
+            roiOverlay.invalidate() // Hide box
+
+            btnSetZone.contentDescription = "Idle"
+            btnSetZone.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                androidx.core.content.ContextCompat.getColor(this, R.color.surface_white)
+            )
+            btnSetZone.imageTintList = android.content.res.ColorStateList.valueOf(
+                androidx.core.content.ContextCompat.getColor(this, R.color.text_primary)
+            )
+        } else {
+            // Activate ROI
+            roiOverlay.setEditable(true)
+            roiOverlay.invalidate() // Show box
+
+            btnSetZone.contentDescription = "Active"
+            btnSetZone.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                androidx.core.content.ContextCompat.getColor(this, R.color.primary_dark_blue)
+            )
+            btnSetZone.imageTintList = android.content.res.ColorStateList.valueOf(
+                androidx.core.content.ContextCompat.getColor(this, R.color.surface_white)
+            )
+            android.widget.Toast.makeText(this, "Drag rectangle to set zone", android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
     
     private fun toggleMotionAlerts() {

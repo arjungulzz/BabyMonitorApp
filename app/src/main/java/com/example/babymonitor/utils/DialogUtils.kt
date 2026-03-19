@@ -19,7 +19,8 @@ object DialogUtils {
                 "🚫 **Remove All Ads**\n" +
                 "🔔 **Motion & Noise Alerts**\n" +
                 "📏 **Custom Motion Zones**\n\n" +
-                "Support development for a small one-time fee!"
+                "Support development for a small one-time fee!\n\n" +
+                "⚠️ *Note: Please purchase Pro on the specific device/Google account you plan to use as the Baby Station.*"
             )
             .setPositiveButton("Go Pro (${BillingManager.getProductPrice() ?: "Check Price"})") { _, _ ->
                 BillingManager.purchasePro(context as android.app.Activity) {
