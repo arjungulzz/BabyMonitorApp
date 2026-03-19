@@ -29,7 +29,7 @@ class BabyStationActivity : AppCompatActivity() {
     private lateinit var server: MjpegServer
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     private var cameraControl: androidx.camera.core.CameraControl? = null
-    private var isMicMuted = false
+    private var isMicMuted = true
     private var isFlashOn = false
     
     private var nsdManager: NsdManager? = null
@@ -116,8 +116,9 @@ class BabyStationActivity : AppCompatActivity() {
 
 
     private var isPro = false
-    private var isNoiseAlert = false
     private var isNoiseAlertsEnabled = false // Default OFF, user must enable
+    private var isMotionAlertsEnabled = false
+    private var lastNoiseAlertTime = 0L
     private var lastMotionDetectedTime = 0L
     private var previousLuma: ByteArray? = null
     
@@ -142,6 +143,16 @@ class BabyStationActivity : AppCompatActivity() {
         val tvMicLabel = findViewById<android.widget.TextView>(R.id.tvMicLabel)
         val tvFlashLabel = findViewById<android.widget.TextView>(R.id.tvFlashLabel)
 
+        // Initialize Mic UI (Start Muted)
+        btnMic.setImageResource(if (isMicMuted) R.drawable.ic_mic_off else R.drawable.ic_mic_on)
+        tvMicLabel.text = if (isMicMuted) "Mic Off" else "Mic On"
+        btnMic.backgroundTintList = android.content.res.ColorStateList.valueOf(
+            if (isMicMuted) ContextCompat.getColor(this, R.color.surface_white) else ContextCompat.getColor(this, R.color.primary_dark_blue)
+        )
+        btnMic.imageTintList = android.content.res.ColorStateList.valueOf(
+            if (isMicMuted) ContextCompat.getColor(this, R.color.text_primary) else ContextCompat.getColor(this, R.color.surface_white)
+        )
+
         btnClose.setOnClickListener {
             cancelServiceAndBroadcast()
             finish()
@@ -165,6 +176,12 @@ class BabyStationActivity : AppCompatActivity() {
             isMicMuted = !isMicMuted
             btnMic.setImageResource(if (isMicMuted) R.drawable.ic_mic_off else R.drawable.ic_mic_on)
             tvMicLabel.text = if (isMicMuted) "Mic Off" else "Mic On"
+            btnMic.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                if (isMicMuted) ContextCompat.getColor(this, R.color.surface_white) else ContextCompat.getColor(this, R.color.primary_dark_blue)
+            )
+            btnMic.imageTintList = android.content.res.ColorStateList.valueOf(
+                if (isMicMuted) ContextCompat.getColor(this, R.color.text_primary) else ContextCompat.getColor(this, R.color.surface_white)
+            )
             resetInactivityTimer()
             
             // If mic is muted, we MUST disable noise alerts as we can't hear anything
@@ -191,7 +208,12 @@ class BabyStationActivity : AppCompatActivity() {
         }
         
         findViewById<android.view.View>(R.id.btnEcoMode).setOnClickListener {
-             startEcoModeCountdown()
+             if (ecoCountdown > 0 && findViewById<android.view.View>(R.id.tvEcoCountdown).visibility == android.view.View.VISIBLE) {
+                 // Already counting down, cancel it
+                 resetInactivityTimer()
+             } else {
+                 startEcoModeCountdown()
+             }
         }
 
         seekZoom.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
@@ -276,14 +298,27 @@ class BabyStationActivity : AppCompatActivity() {
                 tvEco.text = "Dimming screen in $ecoCountdown seconds...\nTap anywhere to wake"
                 
                 ecoCountdown--
+                updateEcoModeUI(true)
                 handler.postDelayed(this, 1000)
             } else {
+                updateEcoModeUI(false)
                 tvEco.animate().alpha(0f).setDuration(200).withEndAction {
                     tvEco.visibility = android.view.View.GONE
                 }.start()
                 enableEcoMode(true)
             }
         }
+    }
+    
+    private fun updateEcoModeUI(isActive: Boolean) {
+        val btnEco = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnEcoMode)
+        val activeColor = androidx.core.content.ContextCompat.getColor(this, R.color.primary_dark_blue)
+        val inactiveColor = androidx.core.content.ContextCompat.getColor(this, R.color.surface_white)
+        val iconActive = androidx.core.content.ContextCompat.getColor(this, R.color.surface_white)
+        val iconInactive = androidx.core.content.ContextCompat.getColor(this, R.color.text_primary)
+
+        btnEco.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isActive) activeColor else inactiveColor)
+        btnEco.imageTintList = android.content.res.ColorStateList.valueOf(if (isActive) iconActive else iconInactive)
     }
     
     private fun resetInactivityTimer() {
@@ -299,6 +334,7 @@ class BabyStationActivity : AppCompatActivity() {
         }
         
         enableEcoMode(false)
+        updateEcoModeUI(false)
         // Auto-eco mode disabled. Manual only.
     }
 
@@ -370,7 +406,7 @@ class BabyStationActivity : AppCompatActivity() {
                 var isMotion = false
                 val roi = currentRoi // Snapshot
                 
-                if (isPro && (roi.width() < 0.95f || roi.height() < 0.95f)) {
+                if (isPro && isMotionAlertsEnabled) {
                     // Motion Detection on Y-Plane (First width*height bytes of NV21)
                     val width = imageProxy.width
                     val height = imageProxy.height
@@ -461,13 +497,44 @@ class BabyStationActivity : AppCompatActivity() {
                          roi.right * mutableBitmap.width,
                          roi.bottom * mutableBitmap.height
                     )
-                    canvas.drawRect(rDraw, paintRoi)
+                    
+                    // Shadow the outside perimeter exactly like the Baby UI
+                    val paintBg = android.graphics.Paint().apply {
+                         color = android.graphics.Color.parseColor("#66000000") // 40% Black
+                         style = android.graphics.Paint.Style.FILL
+                    }
+                    canvas.drawRect(0f, 0f, mutableBitmap.width.toFloat(), rDraw.top, paintBg)
+                    canvas.drawRect(0f, rDraw.bottom, mutableBitmap.width.toFloat(), mutableBitmap.height.toFloat(), paintBg)
+                    canvas.drawRect(0f, rDraw.top, rDraw.left, rDraw.bottom, paintBg)
+                    canvas.drawRect(rDraw.right, rDraw.top, mutableBitmap.width.toFloat(), rDraw.bottom, paintBg)
+                    
+                    // Draw Professional Solid Border (Theme Primary)
+                    val paintBorder = android.graphics.Paint().apply {
+                        color = android.graphics.Color.parseColor("#4CAF50") // Green
+                        style = android.graphics.Paint.Style.STROKE
+                        strokeWidth = 6f
+                        isAntiAlias = true
+                    }
+                    canvas.drawRect(rDraw, paintBorder)
+                    
+                    // Draw Corner Crosshair Knobs
+                    val paintCorner = android.graphics.Paint().apply {
+                        color = android.graphics.Color.parseColor("#4CAF50")
+                        style = android.graphics.Paint.Style.FILL
+                        isAntiAlias = true
+                    }
+                    val cornerRadius = 16f
+                    canvas.drawCircle(rDraw.left, rDraw.top, cornerRadius, paintCorner)
+                    canvas.drawCircle(rDraw.right, rDraw.top, cornerRadius, paintCorner)
+                    canvas.drawCircle(rDraw.left, rDraw.bottom, cornerRadius, paintCorner)
+                    canvas.drawCircle(rDraw.right, rDraw.bottom, cornerRadius, paintCorner)
+
                     bitmap = mutableBitmap
                 }
                 
                 // 4. Draw Overlays (Motion / Noise) if Pro
-                // 4. Draw Overlays (Motion / Noise) if Pro
-                if (isPro && (isMotion || isNoiseAlert)) {
+                val isNoiseAlertNow = System.currentTimeMillis() - lastNoiseAlertTime < 2500
+                if (isPro && (isMotion || isNoiseAlertNow)) {
                     val mutableBitmap = if (bitmap.isMutable) bitmap else bitmap.copy(Bitmap.Config.ARGB_8888, true)
                     val canvas = android.graphics.Canvas(mutableBitmap)
 
@@ -486,7 +553,7 @@ class BabyStationActivity : AppCompatActivity() {
                     canvas.drawRoundRect(borderRect, cornerRadius, cornerRadius, paintAlert)
                     
                     // Determine Label text
-                    val label = if (isMotion && isNoiseAlert) "MOTION & NOISE" else if (isMotion) "MOTION DETECTED" else "NOISE DETECTED"
+                    val label = if (isMotion && isNoiseAlertNow) "MOTION & NOISE" else if (isMotion) "MOTION DETECTED" else "NOISE DETECTED"
                     
                     // Prepare Badge Paint (Filled Pill)
                     paintAlert.style = android.graphics.Paint.Style.FILL
@@ -776,11 +843,16 @@ class BabyStationActivity : AppCompatActivity() {
                                         if (isPro && isNoiseAlertsEnabled) {
                                              var sum = 0.0
                                              for (i in 0 until read step 2) {
-                                                  val sample = (buffer[i].toInt() and 0xFF) or (buffer[i + 1].toInt() shl 8)
-                                                  sum += sample * sample
+                                                  // Properly extract 16-bit signed integer from bytes
+                                                  val low = buffer[i].toInt() and 0xFF
+                                                  val high = buffer[i + 1].toInt()
+                                                  val sample = low or (high shl 8)
+                                                  sum += sample.toDouble() * sample.toDouble()
                                              }
                                              val rms = kotlin.math.sqrt(sum / (read / 2))
-                                             isNoiseAlert = rms > 3000 // Threshold (tuned)
+                                             if (rms > 3000) {
+                                                 lastNoiseAlertTime = System.currentTimeMillis()
+                                             }
                                          }
                                          
                                          try {
@@ -892,8 +964,13 @@ class BabyStationActivity : AppCompatActivity() {
             } else if (session.uri == "/status") {
                 val bm = getSystemService(android.content.Context.BATTERY_SERVICE) as android.os.BatteryManager
                 val batteryLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
-                val statusStr = "isMicOn=${!isMicMuted},isFlashOn=${isFlashOn},batteryLevel=${batteryLevel}"
+                val statusStr = "isMicOn=${!isMicMuted},isFlashOn=${isFlashOn},isMotionOn=${isMotionAlertsEnabled},isNoiseOn=${isNoiseAlertsEnabled},batteryLevel=${batteryLevel}"
                 newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, statusStr)
+            } else if (session.uri == "/toggleMotion") {
+                runOnUiThread {
+                    findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProMotion)?.performClick()
+                }
+                newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "Motion Toggled")
             } else {
                 newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found")
             }
@@ -944,8 +1021,9 @@ class BabyStationActivity : AppCompatActivity() {
             tvSetZoneLabel.text = "Set Motion\nZone"
             tvMotionLabel.text = "Motion\nAlerts"
             
-            // Initialize Noise UI state
+            // Initialize UI States
             updateNoiseAlertsUI()
+            updateMotionAlertsUI()
             
             // Enable for Pro users
             btnSetZone.alpha = 1.0f
@@ -994,7 +1072,24 @@ class BabyStationActivity : AppCompatActivity() {
     }
     
     private fun toggleMotionAlerts() {
-        // android.widget.Toast.makeText(this, "Motion alerts toggled", android.widget.Toast.LENGTH_SHORT).show()
+        isMotionAlertsEnabled = !isMotionAlertsEnabled
+        updateMotionAlertsUI()
+    }
+    
+    private fun updateMotionAlertsUI() {
+        val btnMotion = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProMotion)
+        val tvMotionLabel = findViewById<android.widget.TextView>(R.id.tvMotionLabel)
+        
+        btnMotion.setImageResource(if (isMotionAlertsEnabled) R.drawable.ic_motion_on else R.drawable.ic_motion_off)
+        tvMotionLabel.text = if (isMotionAlertsEnabled) "Motion\nAlerts: ON" else "Motion\nAlerts: OFF"
+        
+        val activeColor = androidx.core.content.ContextCompat.getColor(this, R.color.primary_dark_blue)
+        val inactiveColor = androidx.core.content.ContextCompat.getColor(this, R.color.surface_white)
+        val iconActive = androidx.core.content.ContextCompat.getColor(this, R.color.surface_white)
+        val iconInactive = androidx.core.content.ContextCompat.getColor(this, R.color.text_primary)
+
+        btnMotion.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isMotionAlertsEnabled) activeColor else inactiveColor)
+        btnMotion.imageTintList = android.content.res.ColorStateList.valueOf(if (isMotionAlertsEnabled) iconActive else iconInactive)
     }
     
     private fun toggleNoiseAlerts() {
@@ -1032,19 +1127,18 @@ class BabyStationActivity : AppCompatActivity() {
         
         btnNoise.setImageResource(if (isNoiseAlertsEnabled) R.drawable.ic_volume_up else R.drawable.ic_volume_off)
         tvNoiseLabel.text = if (isNoiseAlertsEnabled) "Noise\nAlerts: ON" else "Noise\nAlerts: OFF"
+
+        val activeColor = androidx.core.content.ContextCompat.getColor(this, R.color.primary_dark_blue)
+        val inactiveColor = androidx.core.content.ContextCompat.getColor(this, R.color.surface_white)
+        val iconActive = androidx.core.content.ContextCompat.getColor(this, R.color.surface_white)
+        val iconInactive = androidx.core.content.ContextCompat.getColor(this, R.color.text_primary)
+
+        btnNoise.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isNoiseAlertsEnabled) activeColor else inactiveColor)
+        btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(if (isNoiseAlertsEnabled) iconActive else iconInactive)
         
         if (isNoiseAlertsEnabled) {
-             // Keep standard color but maybe brighter white? Or just primary text color.
-             // User said "remove green". So let's stick to simple contrast.
-             // We'll use white for ON to make it pop slightly more than gray if needed, or just keep uniform.
-             // Let's use White (#FFFFFF) for ON, and maybe slightly dimmed for OFF?
-             // Actually, existing logic for others is usually just icon change.
-             // Let's use standard text_primary (usually black/dark or white in dark mode).
-             // Since we are floating over camera, white is best.
-             btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
              tvNoiseLabel.setTextColor(android.graphics.Color.WHITE)
         } else {
-             btnNoise.imageTintList = android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
              tvNoiseLabel.setTextColor(android.graphics.Color.parseColor("#E6FFFFFF"))
         }
     }
