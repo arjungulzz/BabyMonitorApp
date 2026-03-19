@@ -13,7 +13,31 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Disconnect Button -->
+    <!-- Baby Station Battery Status (Top Left) -->
+    <LinearLayout
+        android:id="@+id/layoutBattery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/spacing_lg"
+        android:background="@drawable/bg_control_panel"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tvBatteryLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔋 Baby ...%"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium" />
+    </LinearLayout>
+
+    <!-- Disconnect Button (Top Right) -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnDisconnect"
         android:layout_width="wrap_content"
@@ -26,6 +50,85 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_close"
         app:tint="@color/surface_white" />
+
+    <!-- Control Panel (Bottom) -->
+    <LinearLayout
+        android:id="@+id/layoutControls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingHorizontal="12dp"
+        android:background="@drawable/bg_control_panel">
+
+        <!-- Mic Toggle -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnStreamMicToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_mic_on"
+                app:tint="@color/text_primary"
+                app:backgroundTint="@color/surface_white"
+                app:fabSize="mini"
+                app:elevation="2dp"
+                app:borderWidth="0dp"/>
+
+            <TextView
+                android:id="@+id/tvStreamMicLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mic On"
+                android:textColor="#E6FFFFFF"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+
+        <!-- Flash Toggle -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnStreamFlashToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_flash_off"
+                app:tint="@color/text_primary"
+                app:backgroundTint="@color/surface_white"
+                app:fabSize="mini"
+                app:elevation="2dp"
+                app:borderWidth="0dp"/>
+
+            <TextView
+                android:id="@+id/tvStreamFlashLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Flash Off"
+                android:textColor="#E6FFFFFF"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+    </LinearLayout>
 
     <!-- Error State -->
     <LinearLayout

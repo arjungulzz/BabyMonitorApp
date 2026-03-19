@@ -724,7 +724,8 @@ class BabyStationActivity : AppCompatActivity() {
             try {
                 serverSocket = java.net.ServerSocket(8081)
                 
-                val sampleRate = 44100
+                // Optimized for low latency over TCP: 16kHz is Voice Quality but significantly smaller than 44.1kHz
+                val sampleRate = 16000
                 val channelConfig = android.media.AudioFormat.CHANNEL_IN_MONO
                 val audioFormat = android.media.AudioFormat.ENCODING_PCM_16BIT
                 val minBufSize = android.media.AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
@@ -762,9 +763,8 @@ class BabyStationActivity : AppCompatActivity() {
                                         out.write(buffer, 0, minBufSize)
                                         // Sleep to emulate timing? Or just write?
                                         // Writing silence is fast, so let's sleep to avoid high CPU or flooding
-                                        // 44100 Hz, 16bit, mono -> 88200 bytes/sec
-                                        // minBufSize is approx 20-50ms usually.
-                                        val sleepTime = (minBufSize * 1000) / (44100 * 2)
+                                        // 16000 Hz, 16bit, mono -> 32000 bytes/sec
+                                        val sleepTime = (minBufSize * 1000) / (16000 * 2)
                                         Thread.sleep(sleepTime.toLong())
                                      } catch (e: IOException) {
                                         break
@@ -879,6 +879,21 @@ class BabyStationActivity : AppCompatActivity() {
                 }
 
                newChunkedResponse(Response.Status.OK, contentType, inputStream)
+            } else if (session.uri == "/toggleMic") {
+                runOnUiThread {
+                    findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnMicToggle)?.performClick()
+                }
+                newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "Mic Toggled")
+            } else if (session.uri == "/toggleFlash") {
+                runOnUiThread {
+                    findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnFlashToggle)?.performClick()
+                }
+                newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "Flash Toggled")
+            } else if (session.uri == "/status") {
+                val bm = getSystemService(android.content.Context.BATTERY_SERVICE) as android.os.BatteryManager
+                val batteryLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                val statusStr = "isMicOn=${!isMicMuted},isFlashOn=${isFlashOn},batteryLevel=${batteryLevel}"
+                newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, statusStr)
             } else {
                 newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found")
             }

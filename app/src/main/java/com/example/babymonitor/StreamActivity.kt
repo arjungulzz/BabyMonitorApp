@@ -35,6 +35,16 @@ class StreamActivity : AppCompatActivity() {
         val layoutError = findViewById<android.view.View>(R.id.layoutError)
         val btnBack = findViewById<android.view.View>(R.id.btnBack)
         val btnDisconnect = findViewById<android.view.View>(R.id.btnDisconnect)
+        
+        val btnStreamMicToggle = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnStreamMicToggle)
+        val tvStreamMicLabel = findViewById<android.widget.TextView>(R.id.tvStreamMicLabel)
+        
+        val btnStreamFlashToggle = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnStreamFlashToggle)
+        val tvStreamFlashLabel = findViewById<android.widget.TextView>(R.id.tvStreamFlashLabel)
+        
+        val tvBatteryLabel = findViewById<android.widget.TextView>(R.id.tvBatteryLabel)
+
+        val baseUrl = url.removeSuffix("/")
 
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -51,6 +61,40 @@ class StreamActivity : AppCompatActivity() {
         btnDisconnect.setOnClickListener {
             cancelServiceAndBroadcast()
             finish()
+        }
+        
+        btnStreamMicToggle.setOnClickListener {
+            isMicOn = !isMicOn
+            btnStreamMicToggle.setImageResource(if (isMicOn) R.drawable.ic_mic_on else R.drawable.ic_mic_off)
+            tvStreamMicLabel.text = if (isMicOn) "Mic On" else "Mic Off"
+            
+            Thread {
+                try {
+                    val requestUrl = java.net.URL("$baseUrl/toggleMic")
+                    val connection = requestUrl.openConnection() as java.net.HttpURLConnection
+                    connection.requestMethod = "GET"
+                    connection.responseCode
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }.start()
+        }
+        
+        btnStreamFlashToggle.setOnClickListener {
+            isFlashOn = !isFlashOn
+            btnStreamFlashToggle.setImageResource(if (isFlashOn) R.drawable.ic_flash_on else R.drawable.ic_flash_off)
+            tvStreamFlashLabel.text = if (isFlashOn) "Flash On" else "Flash Off"
+            
+            Thread {
+                try {
+                    val requestUrl = java.net.URL("$baseUrl/toggleFlash")
+                    val connection = requestUrl.openConnection() as java.net.HttpURLConnection
+                    connection.requestMethod = "GET"
+                    connection.responseCode
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }.start()
         }
 
         webView.settings.loadWithOverviewMode = true
@@ -94,6 +138,7 @@ class StreamActivity : AppCompatActivity() {
         
         webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
         startAudioStream(url)
+        startStatusPolling(baseUrl, btnStreamMicToggle, tvStreamMicLabel, btnStreamFlashToggle, tvStreamFlashLabel, tvBatteryLabel)
     }
 
 
@@ -115,11 +160,74 @@ class StreamActivity : AppCompatActivity() {
         cancelServiceAndBroadcast()
         isRunning = false
         stopAudioStream()
+        stopStatusPolling()
     }
 
     private fun cancelServiceAndBroadcast() {
         stopService(android.content.Intent(this, ParentMarkerService::class.java))
         sendBroadcast(android.content.Intent("com.example.babymonitor.ACTION_REFRESH_UI"))
+    }
+
+    // Status Polling Logic
+    private var statusHandler: android.os.Handler? = null
+    private var statusRunnable: Runnable? = null
+    private var isMicOn = true
+    private var isFlashOn = false
+
+    private fun startStatusPolling(
+        baseUrl: String,
+        btnMic: com.google.android.material.floatingactionbutton.FloatingActionButton,
+        tvMic: android.widget.TextView,
+        btnFlash: com.google.android.material.floatingactionbutton.FloatingActionButton,
+        tvFlash: android.widget.TextView,
+        tvBattery: android.widget.TextView
+    ) {
+        statusHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        statusRunnable = object : Runnable {
+            override fun run() {
+                if (!isRunning) return
+                Thread {
+                    try {
+                        val requestUrl = java.net.URL("$baseUrl/status")
+                        val connection = requestUrl.openConnection() as java.net.HttpURLConnection
+                        connection.requestMethod = "GET"
+                        if (connection.responseCode == 200) {
+                            val response = connection.inputStream.bufferedReader().use { it.readText() }
+                            val serverMicOn = response.contains("isMicOn=true")
+                            val serverFlashOn = response.contains("isFlashOn=true")
+                            
+                            val batteryMatch = Regex("batteryLevel=(\\d+)").find(response)
+                            val serverBatteryLevel = batteryMatch?.groupValues?.get(1) ?: "..."
+                            
+                            runOnUiThread {
+                                if (isMicOn != serverMicOn) {
+                                    isMicOn = serverMicOn
+                                    btnMic.setImageResource(if (isMicOn) R.drawable.ic_mic_on else R.drawable.ic_mic_off)
+                                    tvMic.text = if (isMicOn) "Mic On" else "Mic Off"
+                                }
+                                if (isFlashOn != serverFlashOn) {
+                                    isFlashOn = serverFlashOn
+                                    btnFlash.setImageResource(if (isFlashOn) R.drawable.ic_flash_on else R.drawable.ic_flash_off)
+                                    tvFlash.text = if (isFlashOn) "Flash On" else "Flash Off"
+                                }
+                                
+                                tvBattery.text = "🔋 Baby: $serverBatteryLevel%"
+                            }
+                        }
+                    } catch (e: Exception) {
+                        // ignore silently
+                    }
+                }.start()
+                statusHandler?.postDelayed(this, 1500)
+            }
+        }
+        statusHandler?.postDelayed(statusRunnable!!, 1000)
+    }
+
+    private fun stopStatusPolling() {
+        statusRunnable?.let { statusHandler?.removeCallbacks(it) }
+        statusHandler = null
+        statusRunnable = null
     }
 
     // Audio Client Logic
@@ -146,21 +254,20 @@ class StreamActivity : AppCompatActivity() {
                 socket = java.net.Socket(ip, 8081)
                 socket.tcpNoDelay = true // Disable Nagle's algorithm for lower latency
                 val inputStream = socket.getInputStream()
-
-                val sampleRate = 44100
+                val sampleRate = 16000
                 val channelConfig = android.media.AudioFormat.CHANNEL_OUT_MONO
                 val audioFormat = android.media.AudioFormat.ENCODING_PCM_16BIT
                 val minBufSize = android.media.AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
 
-                // Optimization: Use a smaller buffer size for lower latency if safe
-                val optimizedBufSize = if (minBufSize > 4096) minBufSize / 2 else minBufSize
+                // Optimization: Use the absolute minimum buffer size for lowest latency
+                val optimizedBufSize = minBufSize
 
                 audioTrack = android.media.AudioTrack(
                     android.media.AudioManager.STREAM_MUSIC,
                     sampleRate,
                     channelConfig,
                     audioFormat,
-                    optimizedBufSize, // Reduced buffer
+                    optimizedBufSize,
                     android.media.AudioTrack.MODE_STREAM
                 )
 
@@ -168,6 +275,20 @@ class StreamActivity : AppCompatActivity() {
                 val buffer = ByteArray(minBufSize)
 
                 while (isAudioPlaying && !Thread.currentThread().isInterrupted) {
+                    // Check if bytes available in socket is huge (audio is lagging behind in the buffer)
+                    val available = inputStream.available()
+                    // 16000 Hz * 2 bytes = 32000 bytes/sec. If we have more than 1/4 second backed up (8000 bytes),
+                    // skip/drain some of the buffer to catch up to live time.
+                    if (available > 8000) {
+                        val drainAmount = available - 4000
+                        var skip = 0
+                        while (skip < drainAmount) {
+                            val skipped = inputStream.read(buffer, 0, Math.min(buffer.size, drainAmount - skip))
+                            if (skipped <= 0) break
+                            skip += skipped
+                        }
+                    }
+
                     val read = inputStream.read(buffer, 0, minBufSize)
                     if (read > 0) {
                         audioTrack.write(buffer, 0, read)
