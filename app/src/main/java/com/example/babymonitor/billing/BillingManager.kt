@@ -54,8 +54,13 @@ object BillingManager {
         prefs.edit().putBoolean(KEY_IS_PRO, isPro).apply()
     }
 
-    fun verifyProStatus(context: Context) {
-        if (USE_MOCK_BILLING) return // No cloud to sync with in mock mode
+    fun verifyProStatus(context: Context, onResult: ((Boolean) -> Unit)? = null) {
+        if (USE_MOCK_BILLING) {
+            // In mock mode, simulating a successful restore call for testing
+            setProStatus(context, true)
+            onResult?.invoke(true)
+            return
+        }
 
         val client = BillingClient.newBuilder(context)
             .setListener { _, _ -> } // No UI listener needed for background check
@@ -83,16 +88,20 @@ object BillingManager {
                                 setProStatus(context, true)
                                 Log.d(TAG, "Pro Status Verified & Restored")
                             }
+                            onResult?.invoke(foundPro)
+                        } else {
+                            onResult?.invoke(false)
                         }
                         client.endConnection()
                     }
                 } else {
+                    onResult?.invoke(false)
                     client.endConnection()
                 }
             }
 
             override fun onBillingServiceDisconnected() {
-                // Do nothing, just a background check
+                onResult?.invoke(false)
             }
         })
     }

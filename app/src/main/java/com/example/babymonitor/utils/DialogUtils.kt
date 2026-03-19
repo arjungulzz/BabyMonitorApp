@@ -27,10 +27,18 @@ object DialogUtils {
                     onSuccess()
                 }
             }
-            .setNegativeButton("Restore Purchase") { _, _ ->
-                 // Mock Restore Logic for now or call billing manager
-                 Toast.makeText(context, "Purchases Restored (Mock)", Toast.LENGTH_SHORT).show()
-                 onSuccess()
+            .setNegativeButton("Restore Purchase") { dialog, _ ->
+                 Toast.makeText(context, "Checking for purchases...", Toast.LENGTH_SHORT).show()
+                 BillingManager.verifyProStatus(context) { isPro ->
+                     (context as? android.app.Activity)?.runOnUiThread {
+                         if (isPro) {
+                             Toast.makeText(context, "Purchase successfully restored! 👑", Toast.LENGTH_LONG).show()
+                             onSuccess()
+                         } else {
+                             Toast.makeText(context, "No existing purchase found for this account.", Toast.LENGTH_LONG).show()
+                         }
+                     }
+                 }
             }
             .setNeutralButton("Cancel", null)
             .create()
