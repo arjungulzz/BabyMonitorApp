@@ -43,6 +43,7 @@ class StreamActivity : AppCompatActivity() {
         val tvStreamFlashLabel = findViewById<android.widget.TextView>(R.id.tvStreamFlashLabel)
         
         val tvBatteryLabel = findViewById<android.widget.TextView>(R.id.tvBatteryLabel)
+        val tvAlertBadge = findViewById<android.widget.TextView>(R.id.tvAlertBadge)
 
         val baseUrl = url.removeSuffix("/")
 
@@ -103,16 +104,6 @@ class StreamActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onReceivedError(
                 view: WebView?,
-                errorCode: Int,
-                description: String?,
-                failingUrl: String?
-            ) {
-                super.onReceivedError(view, errorCode, description, failingUrl)
-                showError()
-            }
-
-            override fun onReceivedError(
-                view: WebView?,
                 request: android.webkit.WebResourceRequest?,
                 error: android.webkit.WebResourceError?
             ) {
@@ -138,7 +129,7 @@ class StreamActivity : AppCompatActivity() {
         
         webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
         startAudioStream(url)
-        startStatusPolling(baseUrl, btnStreamMicToggle, tvStreamMicLabel, btnStreamFlashToggle, tvStreamFlashLabel, tvBatteryLabel)
+        startStatusPolling(baseUrl, btnStreamMicToggle, tvStreamMicLabel, btnStreamFlashToggle, tvStreamFlashLabel, tvBatteryLabel, tvAlertBadge)
     }
 
 
@@ -173,6 +164,7 @@ class StreamActivity : AppCompatActivity() {
     private var statusRunnable: Runnable? = null
     private var isMicOn = true
     private var isFlashOn = false
+    private var lastAlertState = "" // Track state to trigger new vibrations on change
 
     private fun startStatusPolling(
         baseUrl: String,
@@ -180,7 +172,8 @@ class StreamActivity : AppCompatActivity() {
         tvMic: android.widget.TextView,
         btnFlash: com.google.android.material.floatingactionbutton.FloatingActionButton,
         tvFlash: android.widget.TextView,
-        tvBattery: android.widget.TextView
+        tvBattery: android.widget.TextView,
+        tvAlertBadge: android.widget.TextView
     ) {
         statusHandler = android.os.Handler(android.os.Looper.getMainLooper())
         statusRunnable = object : Runnable {
@@ -199,20 +192,56 @@ class StreamActivity : AppCompatActivity() {
                             val batteryMatch = Regex("batteryLevel=(\\d+)").find(response)
                             val serverBatteryLevel = batteryMatch?.groupValues?.get(1) ?: "..."
                             
-                            runOnUiThread {
-                                if (isMicOn != serverMicOn) {
-                                    isMicOn = serverMicOn
-                                    btnMic.setImageResource(if (isMicOn) R.drawable.ic_mic_on else R.drawable.ic_mic_off)
-                                    tvMic.text = if (isMicOn) "Mic On" else "Mic Off"
+                                runOnUiThread {
+                                    if (isMicOn != serverMicOn) {
+                                        isMicOn = serverMicOn
+                                        btnMic.setImageResource(if (isMicOn) R.drawable.ic_mic_on else R.drawable.ic_mic_off)
+                                        tvMic.text = if (isMicOn) "Mic On" else "Mic Off"
+                                    }
+                                    if (isFlashOn != serverFlashOn) {
+                                        isFlashOn = serverFlashOn
+                                        btnFlash.setImageResource(if (isFlashOn) R.drawable.ic_flash_on else R.drawable.ic_flash_off)
+                                        tvFlash.text = if (isFlashOn) "Flash On" else "Flash Off"
+                                    }
+                                    
+                                    val isMotionActive = response.contains("isMotionActive=true")
+                                    val isNoiseActive = response.contains("isNoiseActive=true")
+                                    val currentAlertState = "M:$isMotionActive, N:$isNoiseActive"
+                                    
+                                    if (isMotionActive || isNoiseActive) {
+                                        tvAlertBadge.visibility = android.view.View.VISIBLE
+                                        tvAlertBadge.text = if (isMotionActive && isNoiseActive) "MOTION & NOISE DETECTED" 
+                                                           else if (isMotionActive) "MOTION DETECTED" 
+                                                           else "NOISE DETECTED"
+                                        
+                                        // Vibrate on NEW alert or alert TYPE change
+                                        if (currentAlertState != lastAlertState) {
+                                            lastAlertState = currentAlertState
+                                            android.util.Log.d("BabyMonitor", "vibrating for alert")
+                                            
+                                            val vibrator = getSystemService(android.os.Vibrator::class.java)
+                                            if (vibrator != null && vibrator.hasVibrator()) {
+                                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                                    // High-visibility pulse that works on almost any O+ device
+                                                    val effect = android.os.VibrationEffect.createWaveform(longArrayOf(0, 250, 100, 250), -1)
+                                                    val attributes = android.media.AudioAttributes.Builder()
+                                                        .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                                                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                                        .build()
+                                                    vibrator.vibrate(effect, attributes)
+                                                } else {
+                                                    @Suppress("DEPRECATION")
+                                                    vibrator.vibrate(longArrayOf(0, 250, 100, 250), -1)
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        tvAlertBadge.visibility = android.view.View.GONE
+                                        lastAlertState = currentAlertState
+                                    }
+                                    
+                                    tvBattery.text = "🔋 Baby: $serverBatteryLevel%"
                                 }
-                                if (isFlashOn != serverFlashOn) {
-                                    isFlashOn = serverFlashOn
-                                    btnFlash.setImageResource(if (isFlashOn) R.drawable.ic_flash_on else R.drawable.ic_flash_off)
-                                    tvFlash.text = if (isFlashOn) "Flash On" else "Flash Off"
-                                }
-                                
-                                tvBattery.text = "🔋 Baby: $serverBatteryLevel%"
-                            }
                         }
                     } catch (e: Exception) {
                         // ignore silently
@@ -262,14 +291,36 @@ class StreamActivity : AppCompatActivity() {
                 // Optimization: Use the absolute minimum buffer size for lowest latency
                 val optimizedBufSize = minBufSize
 
-                audioTrack = android.media.AudioTrack(
-                    android.media.AudioManager.STREAM_MUSIC,
-                    sampleRate,
-                    channelConfig,
-                    audioFormat,
-                    optimizedBufSize,
-                    android.media.AudioTrack.MODE_STREAM
-                )
+                // Use modern AudioTrack.Builder for low latency
+                audioTrack = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    android.media.AudioTrack.Builder()
+                        .setAudioAttributes(
+                            android.media.AudioAttributes.Builder()
+                                .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build()
+                        )
+                        .setAudioFormat(
+                            android.media.AudioFormat.Builder()
+                                .setEncoding(audioFormat)
+                                .setSampleRate(sampleRate)
+                                .setChannelMask(channelConfig)
+                                .build()
+                        )
+                        .setBufferSizeInBytes(optimizedBufSize)
+                        .setTransferMode(android.media.AudioTrack.MODE_STREAM)
+                        .build()
+                } else {
+                    @Suppress("DEPRECATION")
+                    android.media.AudioTrack(
+                        android.media.AudioManager.STREAM_MUSIC,
+                        sampleRate,
+                        channelConfig,
+                        audioFormat,
+                        optimizedBufSize,
+                        android.media.AudioTrack.MODE_STREAM
+                    )
+                }
 
                 audioTrack.play()
                 val buffer = ByteArray(minBufSize)
@@ -318,6 +369,14 @@ class StreamActivity : AppCompatActivity() {
         audioThread = null
     }
     
+    private fun <T> getServiceSafe(serviceClass: Class<T>): T? {
+        return try {
+            getSystemService(serviceClass)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     companion object {
         var isRunning = false
     }

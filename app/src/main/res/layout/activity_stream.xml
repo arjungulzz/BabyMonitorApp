@@ -13,6 +13,25 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Native Alert Badge (Top Center) -->
+    <TextView
+        android:id="@+id/tvAlertBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:background="@drawable/bg_alert_badge"
+        android:fontFamily="sans-serif-black"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="12dp"
+        android:text="MOTION DETECTED"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:elevation="12dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <!-- Baby Station Battery Status (Top Left) -->
     <LinearLayout
         android:id="@+id/layoutBattery"
