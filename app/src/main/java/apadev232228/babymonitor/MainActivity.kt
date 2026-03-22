@@ -169,7 +169,7 @@ class MainActivity : AppCompatActivity() {
     private fun sendCrashReport(log: String) {
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = android.net.Uri.parse("mailto:")
-            putExtra(Intent.EXTRA_EMAIL, arrayOf("arjungulyani@gmail.com")) // Developer email
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("apadev232228@gmail.com")) // Developer email
             putExtra(Intent.EXTRA_SUBJECT, "Crash Report: Baby Monitor App")
             putExtra(Intent.EXTRA_TEXT, "Device Info:\nModel: ${android.os.Build.MODEL}\nAndroid: ${android.os.Build.VERSION.RELEASE}\n\nStack Trace:\n$log")
         }
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity() {
     private fun sendEmail(subject: String) {
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = android.net.Uri.parse("mailto:") // only email apps should handle this
-            putExtra(Intent.EXTRA_EMAIL, arrayOf("arjungulyani@gmail.com")) 
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("apadev232228@gmail.com")) 
             putExtra(Intent.EXTRA_SUBJECT, subject)
         }
         try {
