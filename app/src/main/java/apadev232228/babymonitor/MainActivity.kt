@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                 .setMessage("Version 1.0.0\n\nA simple, secure baby monitor for your home.\n\nMade with ❤️")
                 .setPositiveButton("OK", null)
                 .setNeutralButton("Privacy Policy") { _, _ ->
-                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://apadev232228.github.io/babymonitor/privacy.html"))
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://arjungulzz.github.io/BabyMonitorApp/privacy.html"))
                     try { startActivity(intent) } catch (e: Exception) { e.printStackTrace() }
                 }
                 .show()
