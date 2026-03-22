@@ -17,6 +17,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.content.ContextCompat
 import java.net.InetAddress
 
 class ParentStationActivity : AppCompatActivity() {
@@ -280,7 +281,7 @@ class ParentStationActivity : AppCompatActivity() {
         override fun onServiceFound(service: NsdServiceInfo) {
             Log.d(TAG, "Service found: $service")
             if (service.serviceType.contains("_http._tcp")) {
-                nsdManager.resolveService(service, object : NsdManager.ResolveListener {
+                val resolveListener = object : NsdManager.ResolveListener {
                     override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
                         Log.e(TAG, "Resolve failed: $errorCode")
                     }
@@ -288,14 +289,37 @@ class ParentStationActivity : AppCompatActivity() {
                     override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
                         Log.d(TAG, "Resolve Succeeded. $serviceInfo")
                         runOnUiThread {
-                            // Add to temp list instead of main list
                             if (foundServices.none { it.serviceName == serviceInfo.serviceName }) {
                                 foundServices.add(serviceInfo)
                                 tvStatus.text = "Searching... (Found ${foundServices.size})"
                             }
                         }
                     }
-                })
+                }
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    nsdManager.registerServiceInfoCallback(service, ContextCompat.getMainExecutor(this@ParentStationActivity), object : NsdManager.ServiceInfoCallback {
+                        override fun onServiceInfoCallbackRegistrationFailed(errorCode: Int) {
+                             Log.e(TAG, "Callback registration failed: $errorCode")
+                        }
+                        override fun onServiceUpdated(serviceInfo: NsdServiceInfo) {
+                            Log.d(TAG, "Service Updated/Resolved. $serviceInfo")
+                            runOnUiThread {
+                                if (foundServices.none { it.serviceName == serviceInfo.serviceName }) {
+                                    foundServices.add(serviceInfo)
+                                    tvStatus.text = "Searching... (Found ${foundServices.size})"
+                                }
+                            }
+                        }
+                        override fun onServiceLost() {
+                            Log.d(TAG, "Service lost in callback")
+                        }
+                        override fun onServiceInfoCallbackUnregistered() {}
+                    })
+                } else {
+                    @Suppress("DEPRECATION")
+                    nsdManager.resolveService(service, resolveListener)
+                }
             }
         }
 

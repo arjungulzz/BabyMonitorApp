@@ -234,6 +234,7 @@ class StreamActivity : AppCompatActivity() {
                                                             .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT)
                                                             .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
                                                             .build()
+                                                        @Suppress("DEPRECATION")
                                                         vibrator.vibrate(effect, attributes)
                                                     }
                                                 } else {
