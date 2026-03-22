@@ -1,4 +1,4 @@
-package com.example.babymonitor
+package apadev232228.babymonitor
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -18,11 +18,13 @@ class BabyMarkerService : Service() {
     companion object {
         private const val CHANNEL_ID = "baby_station_channel"
         private const val NOTIFICATION_ID = 1
-        const val ACTION_STOP = "com.example.babymonitor.STOP_BABY_STATION"
+        const val ACTION_STOP = "apadev232228.babymonitor.STOP_BABY_STATION"
+        var isRunning = false
     }
     
     override fun onCreate() {
         super.onCreate()
+        isRunning = true
         createNotificationChannel()
     }
     
@@ -119,17 +121,17 @@ class BabyMarkerService : Service() {
     
     private fun stopBabyStation() {
         // Broadcast to BabyStationActivity to stop monitoring
-        val intent = Intent("com.example.babymonitor.ACTION_STOP_MONITORING")
+        val intent = Intent("apadev232228.babymonitor.ACTION_STOP_MONITORING")
         intent.setPackage(packageName)
         sendBroadcast(intent)
         
-        stopForeground(true)
+        stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
     
     override fun onDestroy() {
         super.onDestroy()
-        stopForeground(true)
+        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 }
 
@@ -137,6 +139,17 @@ class BabyMarkerService : Service() {
  * Empty Service used solely as a runtime marker to detect if ParentStation is active.
  */
 class ParentMarkerService : Service() {
+    companion object {
+        var isRunning = false
+    }
+    override fun onCreate() {
+        super.onCreate()
+        isRunning = true
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        isRunning = false
+    }
     override fun onBind(intent: Intent?): IBinder? = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         return START_NOT_STICKY

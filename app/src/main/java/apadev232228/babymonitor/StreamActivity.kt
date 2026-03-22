@@ -1,4 +1,4 @@
-package com.example.babymonitor
+package apadev232228.babymonitor
 
 import android.os.Bundle
 import android.webkit.WebView
@@ -156,7 +156,7 @@ class StreamActivity : AppCompatActivity() {
 
     private fun cancelServiceAndBroadcast() {
         stopService(android.content.Intent(this, ParentMarkerService::class.java))
-        sendBroadcast(android.content.Intent("com.example.babymonitor.ACTION_REFRESH_UI"))
+        sendBroadcast(android.content.Intent("apadev232228.babymonitor.ACTION_REFRESH_UI"))
     }
 
     // Status Polling Logic
@@ -221,17 +221,24 @@ class StreamActivity : AppCompatActivity() {
                                             
                                             val vibrator = getSystemService(android.os.Vibrator::class.java)
                                             if (vibrator != null && vibrator.hasVibrator()) {
+                                                val pattern = longArrayOf(0, 250, 100, 250)
                                                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                                    // High-visibility pulse that works on almost any O+ device
-                                                    val effect = android.os.VibrationEffect.createWaveform(longArrayOf(0, 250, 100, 250), -1)
-                                                    val attributes = android.media.AudioAttributes.Builder()
-                                                        .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT)
-                                                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                                                        .build()
-                                                    vibrator.vibrate(effect, attributes)
+                                                    val effect = android.os.VibrationEffect.createWaveform(pattern, -1)
+                                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                                        val attributes = android.os.VibrationAttributes.Builder()
+                                                            .setUsage(android.os.VibrationAttributes.USAGE_ALARM)
+                                                            .build()
+                                                        vibrator.vibrate(effect, attributes)
+                                                    } else {
+                                                        val attributes = android.media.AudioAttributes.Builder()
+                                                            .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                                                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                                            .build()
+                                                        vibrator.vibrate(effect, attributes)
+                                                    }
                                                 } else {
                                                     @Suppress("DEPRECATION")
-                                                    vibrator.vibrate(longArrayOf(0, 250, 100, 250), -1)
+                                                    vibrator.vibrate(pattern, -1)
                                                 }
                                             }
                                         }

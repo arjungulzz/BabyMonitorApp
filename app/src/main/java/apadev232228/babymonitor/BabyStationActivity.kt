@@ -1,4 +1,4 @@
-package com.example.babymonitor
+package apadev232228.babymonitor
 
 import android.content.Context
 import android.net.nsd.NsdManager
@@ -22,6 +22,9 @@ import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.graphics.YuvImage
 import java.util.concurrent.atomic.AtomicReference
+import apadev232228.babymonitor.billing.BillingManager
+import apadev232228.babymonitor.ui.RoiOverlayView
+import apadev232228.babymonitor.utils.DialogUtils
 
 class BabyStationActivity : AppCompatActivity() {
 
@@ -60,7 +63,7 @@ class BabyStationActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvStatus)
         setupControls()
 
-        isPro = com.example.babymonitor.billing.BillingManager.isProUser(this)
+        isPro = BillingManager.isProUser(this)
         
         setupZoneControls()
         setupProSidebar()
@@ -91,7 +94,7 @@ class BabyStationActivity : AppCompatActivity() {
         startBabyStationService()
         
         // Register receiver for stop action from notification
-        val stopFilter = android.content.IntentFilter("com.example.babymonitor.ACTION_STOP_MONITORING")
+        val stopFilter = android.content.IntentFilter("apadev232228.babymonitor.ACTION_STOP_MONITORING")
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(stopMonitoringReceiver, stopFilter, android.content.Context.RECEIVER_NOT_EXPORTED)
         } else {
@@ -135,7 +138,7 @@ class BabyStationActivity : AppCompatActivity() {
         val btnClose = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnCloseStation)
         val btnInfo = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnInfo)
         
-        val roiOverlay = findViewById<com.example.babymonitor.ui.RoiOverlayView>(R.id.roiOverlay)
+        val roiOverlay = findViewById<RoiOverlayView>(R.id.roiOverlay)
         val layoutControls = findViewById<android.view.View>(R.id.layoutControls)
 
 
@@ -247,7 +250,7 @@ class BabyStationActivity : AppCompatActivity() {
         }
 
         // Real-time update of ROI for detection
-        roiOverlay.onRoiChanged = { rect ->
+        roiOverlay.onRoiChanged = { rect: android.graphics.RectF ->
             currentRoi.set(rect)
         }
 
@@ -401,7 +404,7 @@ class BabyStationActivity : AppCompatActivity() {
                 val rotationDegrees = imageProxy.imageInfo.rotationDegrees
 
                 // 1. Convert to NV21 ByteArray immediately (Single read of buffers)
-                val nv21 = com.example.babymonitor.Utils.yuv420888ToNv21(imageProxy)
+                val nv21 = apadev232228.babymonitor.Utils.yuv420888ToNv21(imageProxy)
                 
                 var isMotion = false
                 val roi = currentRoi // Snapshot
@@ -431,7 +434,9 @@ class BabyStationActivity : AppCompatActivity() {
                              for (x in rObj.left until rObj.right step 10) { 
                                  val i = rowStart + x
                                  if (i < ySize) { 
-                                     val diff = kotlin.math.abs((nv21[i].toInt() and 0xFF) - (previousLuma!![i].toInt() and 0xFF))
+                                     val currentVal = nv21[i].toInt() and 0xFF
+                                     val prevVal = previousLuma!![i].toInt() and 0xFF
+                                     val diff = kotlin.math.abs(currentVal - prevVal)
                                      if (diff > threshold) diffCount++
                                  }
                              }
@@ -667,7 +672,7 @@ class BabyStationActivity : AppCompatActivity() {
     private fun cancelServiceAndBroadcast() {
         android.util.Log.d("BabyMonitor", "BabyStation: Cancelling Service and Broadcasting Update")
         stopService(android.content.Intent(this, BabyMarkerService::class.java))
-        val intent = android.content.Intent("com.example.babymonitor.ACTION_REFRESH_UI")
+        val intent = android.content.Intent("apadev232228.babymonitor.ACTION_REFRESH_UI")
         intent.setPackage(packageName)
         sendBroadcast(intent)
     }
@@ -923,7 +928,7 @@ class BabyStationActivity : AppCompatActivity() {
     
     private fun showPremiumPrompt(featureName: String) {
         // featureName is ignored in favor of the full benefit list
-        com.example.babymonitor.utils.DialogUtils.showProUpgradeDialog(this) {
+        DialogUtils.showProUpgradeDialog(this) {
              // Purchase successful
              isPro = true
              runOnUiThread {
@@ -978,7 +983,7 @@ class BabyStationActivity : AppCompatActivity() {
     
     private fun handleSetZone() {
         val btnSetZone = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnProSetZone)
-        val roiOverlay = findViewById<com.example.babymonitor.ui.RoiOverlayView>(R.id.roiOverlay)
+        val roiOverlay = findViewById<RoiOverlayView>(R.id.roiOverlay)
 
         val isActive = btnSetZone.contentDescription == "Active"
 

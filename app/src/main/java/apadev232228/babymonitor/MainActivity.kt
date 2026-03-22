@@ -1,4 +1,4 @@
-package com.example.babymonitor
+package apadev232228.babymonitor
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -13,7 +13,7 @@ class MainActivity : AppCompatActivity() {
 
     private val uiUpdateReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
-            if (intent?.action == "com.example.babymonitor.ACTION_REFRESH_UI") {
+            if (intent?.action == "apadev232228.babymonitor.ACTION_REFRESH_UI") {
                 android.util.Log.d("BabyMonitor", "MainActivity: Received ACTION_REFRESH_UI Broadcast")
                 // Delay check to allow Service to fully stop (Race Condition Fix)
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         setupWindowInsets()
         
         // Register Live UI Receiver
-        val filter = android.content.IntentFilter("com.example.babymonitor.ACTION_REFRESH_UI")
+        val filter = android.content.IntentFilter("apadev232228.babymonitor.ACTION_REFRESH_UI")
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(uiUpdateReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
         } else {
@@ -68,15 +68,19 @@ class MainActivity : AppCompatActivity() {
             animateButtonPress(it)
             android.app.AlertDialog.Builder(this)
                 .setTitle("About Baby Monitor")
-                .setMessage("Version 1.0\n\nA simple, secure baby monitor for your home.\n\nMade with ❤️")
+                .setMessage("Version 1.0.0\n\nA simple, secure baby monitor for your home.\n\nMade with ❤️")
                 .setPositiveButton("OK", null)
+                .setNeutralButton("Privacy Policy") { _, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://apadev232228.github.io/babymonitor/privacy.html"))
+                    try { startActivity(intent) } catch (e: Exception) { e.printStackTrace() }
+                }
                 .show()
         }
 
         setupMonetization()
         
         // Auto-restore Pro status (background check)
-        com.example.babymonitor.billing.BillingManager.verifyProStatus(this)
+        apadev232228.babymonitor.billing.BillingManager.verifyProStatus(this)
 
         // Delay animations slightly to let layout settle and reduce startup jank
         window.decorView.postDelayed({
@@ -136,14 +140,11 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun isServiceRunning(serviceClass: Class<*>): Boolean {
-        val activityManager = getSystemService(android.app.ActivityManager::class.java)
-        // Check running services - this is allowed for own application services even in newer Android versions
-        for (service in activityManager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.name == service.service.className) {
-                return true
-            }
+        return when (serviceClass) {
+            BabyMarkerService::class.java -> BabyMarkerService.isRunning
+            ParentMarkerService::class.java -> ParentMarkerService.isRunning
+            else -> false
         }
-        return false
     }
 
     private fun checkCrashReport() {
@@ -198,7 +199,7 @@ class MainActivity : AppCompatActivity() {
         val tvProTitle = findViewById<android.widget.TextView>(R.id.tvProTitle)
         val tvProSubtitle = findViewById<android.widget.TextView>(R.id.tvProSubtitle)
 
-        if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
+        if (apadev232228.babymonitor.billing.BillingManager.isProUser(this)) {
             // Pro Mode
             adView.visibility = android.view.View.GONE
             
@@ -227,7 +228,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showProPurchaseDialog() {
-        com.example.babymonitor.utils.DialogUtils.showProUpgradeDialog(this) {
+        apadev232228.babymonitor.utils.DialogUtils.showProUpgradeDialog(this) {
             runOnUiThread {
                 Toast.makeText(this, "Welcome to Pro Mode!", Toast.LENGTH_SHORT).show()
                 setupMonetization() // Refresh UI

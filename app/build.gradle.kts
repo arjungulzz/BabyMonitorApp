@@ -4,17 +4,17 @@ plugins {
 }
 
 android {
-    namespace = "com.example.babymonitor"
+    namespace = "apadev232228.babymonitor"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.example.babymonitor"
+        applicationId = "apadev232228.babymonitor"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
         multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

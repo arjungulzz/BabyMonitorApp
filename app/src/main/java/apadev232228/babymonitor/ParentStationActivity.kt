@@ -1,4 +1,4 @@
-package com.example.babymonitor
+package apadev232228.babymonitor
 
 import android.content.Context
 import android.content.Intent
@@ -79,7 +79,7 @@ class ParentStationActivity : AppCompatActivity() {
             insets
         }
         
-        if (com.example.babymonitor.billing.BillingManager.isProUser(this)) {
+        if (apadev232228.babymonitor.billing.BillingManager.isProUser(this)) {
             adView.visibility = View.GONE
         } else {
             val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
@@ -135,7 +135,12 @@ class ParentStationActivity : AppCompatActivity() {
 
     private fun startStream(service: NsdServiceInfo) {
         val intent = Intent(this, StreamActivity::class.java)
-        val host = service.host
+        val host = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            service.hostAddresses.firstOrNull()
+        } else {
+            @Suppress("DEPRECATION")
+            service.host
+        }
         val port = service.port
         if (host != null) {
             val url = "http://${host.hostAddress}:$port"
@@ -166,8 +171,13 @@ class ParentStationActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val service = services[position]
             holder.tvName.text = service.serviceName
-            val host = service.host?.hostAddress ?: "Unknown"
-            holder.tvIp.text = "$host:${service.port}"
+            val hostAddr = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                service.hostAddresses.firstOrNull()?.hostAddress ?: "Unknown"
+            } else {
+                @Suppress("DEPRECATION")
+                service.host?.hostAddress ?: "Unknown"
+            }
+            holder.tvIp.text = "$hostAddr:${service.port}"
             
             // Scale animation on appear
             holder.itemView.alpha = 0f

@@ -1,12 +1,12 @@
-package com.example.babymonitor.utils
+package apadev232228.babymonitor.utils
 
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import com.example.babymonitor.R
-import com.example.babymonitor.billing.BillingManager
+import apadev232228.babymonitor.R
+import apadev232228.babymonitor.billing.BillingManager
 
 object DialogUtils {
 
